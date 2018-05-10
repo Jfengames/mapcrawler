@@ -58,7 +58,7 @@ class GaodeCrawler(scrapy.Spider):
         query_para = parse.parse_qsl(_para)
         query_para = dict(query_para)
         parameters = {
-            'key':query_para['key'],
+            # 'key':query_para['key'],
             'citylimit':'true',
         }
 
@@ -114,7 +114,7 @@ class GaodeCrawler(scrapy.Spider):
         item['new_type'] = base.get('new_type'),
         item['tag'] = base.get('tag'),
         item['building_types'] = base.get('building_types'),
-        item['opening_data'] = base.get('opening_data'),
+        # item['opening_data'] = base.get('opening_data'),
         item['shape'] = res.get('data').get('spec').get('mining_shape').get('shape'),
         item['center'] = res.get('data').get('spec').get('mining_shape').get('center'),
         item['level'] = res.get('data').get('spec').get('mining_shape').get('level'),

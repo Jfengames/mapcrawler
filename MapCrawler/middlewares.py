@@ -6,7 +6,14 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+import requests
+import time
+import json
 
+import logging
+logger = logging.getLogger(__name__)
+
+ADSL_IP_ADDR_URL = 'http://223.105.3.170:18888'
 
 class MapcrawlerSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -101,3 +108,98 @@ class MapcrawlerDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class AdslProxyMiddleware():
+    """
+    通过请求adsl拨号服务器建立proxy服务，并通过不断更换ip地址来避免被ban
+    """
+
+
+    def __init__(self,settings):
+        """
+        通过从固定ip服务器上获取代理服务器的ip地址。如果是固定ip服务器是本机，地址应为127.0.0.1:18888
+        :param settings:
+        :return:
+        """
+        self.adsl_ip_add_url = ADSL_IP_ADDR_URL
+        self.auth = ('ss_adsl','thisisproxyip')
+        self.re_fresh_proxy()
+
+    def re_fresh_proxy(self,old_prxy=None):
+        while True:
+            proxy_ip = requests.get(self.adsl_ip_add_url,auth=self.auth).text
+            self.proxy = 'http://'+proxy_ip
+            if self.proxy == old_prxy:
+                time.sleep(30)
+                continue
+            else:
+                break
+        logger.info('proxy ip地址从%s更新为-->%s'%(old_prxy,self.proxy))
+        return self.proxy
+
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler.settings)
+
+
+    def process_request(self,request,spider):
+        proxy = request.meta.get('proxy',None)
+        # 使用最近的ip
+        if proxy != self.proxy:
+            request.meta['proxy'] = self.proxy
+        return
+
+    def process_response(self,request,response,spider):
+        """
+        验证resposne是否正确，如不正确，需要更换代理的ip，并重新请求request
+
+        :param request:
+        :param response:
+        :param spider:
+        :return:
+        """
+
+        def is_correct(response):
+            """
+            判断response字段是否正确
+            :param response:
+            :return:
+            """
+            if 'http://restapi.amap.com' in response.url:
+                # 使用官方api
+                res = json.loads(response.text)
+                if res['status'] == '1' and res['info']=='OK':
+                    # and 'shape' in response.text:
+                    return True
+                else:
+                    return False
+            else:
+                # 非官方api
+                if 'shape' in response.text:
+                    return True
+                else:
+                    return False
+
+        if is_correct(response):
+            # 结果正确，返回response
+            return response
+        else:
+            # 结果不正确，更新ip，重新请求
+            old_proxy = request.meta['proxy']
+            self.re_fresh_proxy(old_proxy)
+            request.meta['proxy'] = self.proxy
+            request.dont_filter = True
+            return request
+
+
+    def process_exception(self,request,exception,spider):
+        """
+        如果有异常，在这里处理
+        :param request:
+        :param exception:
+        :param spider:
+        :return:
+        """
+
