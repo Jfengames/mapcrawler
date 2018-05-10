@@ -5,7 +5,7 @@ import scrapy
 from urllib import parse
 import json
 
-from MapCrawler.items import PoiStractItem
+from MapCrawler.items import PoiAbstractItem, PoiDetailItem
 
 import logging
 logger = logging.getLogger(__name__)
@@ -54,7 +54,6 @@ class GaodeCrawler(scrapy.Spider):
         if res['status'] == 0:
             raise scrapy.exceptions.IgnoreRequest('info:'%res['info'])
 
-        search_url = 'https://ditu.amap.com/detail/get/detail'
         _url,_para = response.url.split('?')
         query_para = parse.parse_qsl(_para)
         query_para = dict(query_para)
@@ -65,13 +64,16 @@ class GaodeCrawler(scrapy.Spider):
 
         for poi in res['pois']:
             # 保存poi摘要信息
-            item = PoiStractItem()
+            item = PoiAbstractItem()
             item.update(poi)
-            yield(item)
+            yield item
 
+            # 生成每个poi的搜索url
+            search_url = 'https://ditu.amap.com/detail/get/detail'
             add_para = {'keywords':poi['name'],
                         'city':poi['cityname'],
-                        id:poi['id']}
+                        'citylimit':'true',
+                        'id':poi['id']}
             add_para.update(parameters)
             poi_url = '%s?%s'%(search_url,parse.urlencode(add_para))
             yield scrapy.Request(poi_url,callback=self.parse_target_poi)
@@ -96,7 +98,27 @@ class GaodeCrawler(scrapy.Spider):
         :return:
         """
         res = json.loads(response.text)
+        logger.debug(res)
+        item = PoiDetailItem()
+        base = res['data']['base']
+        item['business'] = base.get('business'),
+        item['city_adcode'] = base.get('city_adcode'),
+        item['city_name'] = base.get('city_name'),
+        item['classify'] = base.get('classify'),
+        item['code'] = base.get('code'),
+        # item['area'] = res.get('data').get('spec').get('mining_shape').get('area'),
+        item['name'] = base.get('name'),
+        # item['mainpoi'] = base.get('geodata').get('aoi').get('mainpoi'),
+        item['navi_geametry'] = base.get('navi_geametry'),
+        item['new_keytype'] = base.get('new_keytype'),
+        item['new_type'] = base.get('new_type'),
+        item['tag'] = base.get('tag'),
+        item['building_types'] = base.get('building_types'),
+        item['opening_data'] = base.get('opening_data'),
+        item['shape'] = res.get('data').get('spec').get('mining_shape').get('shape'),
+        item['center'] = res.get('data').get('spec').get('mining_shape').get('center'),
+        item['level'] = res.get('data').get('spec').get('mining_shape').get('level'),
 
-        pass
+        yield item
 
 

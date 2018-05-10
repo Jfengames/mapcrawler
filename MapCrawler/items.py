@@ -8,7 +8,7 @@
 import scrapy
 
 
-class PoiStractItem(scrapy.Item):
+class PoiAbstractItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     """
@@ -54,3 +54,21 @@ class PoiStractItem(scrapy.Item):
     distance=  scrapy.Field()
     biz_ext=  scrapy.Field()
 
+class PoiDetailItem(scrapy.Item):
+    business = scrapy.Field() #
+    city_adcode = scrapy.Field() #
+    city_name = scrapy.Field() #
+    classify = scrapy.Field() #
+    code = scrapy.Field() #
+    area = scrapy.Field() #
+    name = scrapy.Field() #
+    mainpoi = scrapy.Field() #
+    navi_geametry = scrapy.Field() #
+    new_keytype = scrapy.Field() #
+    new_type = scrapy.Field() #
+    tag = scrapy.Field() #
+    building_types = scrapy.Field() #
+    opening_data = scrapy.Field() #
+    shape = scrapy.Field() #
+    center = scrapy.Field()
+    level = scrapy.Field()
