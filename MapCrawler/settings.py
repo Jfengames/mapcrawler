@@ -19,7 +19,7 @@ NEWSPIDER_MODULE = 'MapCrawler.spiders'
 #USER_AGENT = 'MapCrawler (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -89,3 +89,7 @@ DEFAULT_REQUEST_HEADERS = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+# LOG_FILE = 'mapcrawler.log'
+# LOG_ENCODING='utf-8'
+# LOG_LEVEL = 'INFO'
+
