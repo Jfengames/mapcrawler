@@ -129,7 +129,7 @@ class AdslProxyMiddleware():
     def re_fresh_proxy(self,old_prxy=None):
         while True:
             proxy_ip = requests.get(self.adsl_ip_add_url,auth=self.auth).text
-            self.proxy = 'http://'+proxy_ip
+            self.proxy = proxy_ip
             if self.proxy == old_prxy:
                 time.sleep(30)
                 continue
@@ -145,10 +145,17 @@ class AdslProxyMiddleware():
 
 
     def process_request(self,request,spider):
-        proxy = request.meta.get('proxy',None)
+        # proxy = request.meta.get('proxy',None)
+        if request.meta.get('proxy'):
+            proxy = request.meta['proxy'].split('://')[1]
+        else:
+            proxy = None
         # 使用最近的ip
         if proxy != self.proxy:
-            request.meta['proxy'] = self.proxy
+            request.meta['proxy'] = request.url.split('://')[0]+'://'+self.proxy
+
+        # logger.debug(request.url)
+        # logger.debug(request.meta['proxy'])
         return
 
     def process_response(self,request,response,spider):
@@ -180,6 +187,7 @@ class AdslProxyMiddleware():
                 if 'shape' in response.text:
                     return True
                 else:
+                    logger.debug('边界搜索中无shape字段\nurl:%s\nresponse:%s'%(response.url,response.text))
                     return False
 
         if is_correct(response):
@@ -187,10 +195,13 @@ class AdslProxyMiddleware():
             return response
         else:
             # 结果不正确，更新ip，重新请求
-            old_proxy = request.meta['proxy']
+            old_proxy = request.meta['proxy'].split('://')[1]
             self.re_fresh_proxy(old_proxy)
-            request.meta['proxy'] = self.proxy
+            request.meta['proxy'] = request.url.split('://')[0]+'://'+self.proxy
             request.dont_filter = True
+
+            # logger.debug(request.url)
+            # logger.debug(request.meta['proxy'])
             return request
 
 
