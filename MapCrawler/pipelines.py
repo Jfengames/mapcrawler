@@ -15,9 +15,9 @@ class MapcrawlerPipeline(object):
     def process_item(self, item, spider):
 
         if isinstance(item, PoiAbstractItem):
-            self.abstract_file.write(item.__str__())
+            self.abstract_file.write(item.__str__()+'\n')
         if isinstance(item,PoiDetailItem):
-            self.detail_file.write(item.__str__())
+            self.detail_file.write(item.__str__()+'\n')
 
         return item
 

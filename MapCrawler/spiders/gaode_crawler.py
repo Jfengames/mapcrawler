@@ -19,9 +19,9 @@ class GaodeCrawler(scrapy.Spider):
         先爬取1km×1km的方格
         :return:
         """
-        jinshui_adcode='410105' #金水区的adcode
-        start_long_lat = '34.808881,113.652670'
-        resolution = 0.01 # 直接加到经纬度上，大概1km
+        # jinshui_adcode='410105' #金水区的adcode
+        # start_long_lat = '34.808881,113.652670'
+        # resolution = 0.01 # 直接加到经纬度上，大概1km
 
         urls_prex = [
             'http://restapi.amap.com/v3/place/polygon',
@@ -98,26 +98,29 @@ class GaodeCrawler(scrapy.Spider):
         :return:
         """
         res = json.loads(response.text)
-        logger.debug(res)
+        logger.debug('边界搜索url：%s\nresponse:%s'%(response.url,response.text))
         item = PoiDetailItem()
-        base = res['data']['base']
-        item['business'] = base.get('business'),
-        item['city_adcode'] = base.get('city_adcode'),
-        item['city_name'] = base.get('city_name'),
-        item['classify'] = base.get('classify'),
-        item['code'] = base.get('code'),
-        # item['area'] = res.get('data').get('spec').get('mining_shape').get('area'),
-        item['name'] = base.get('name'),
-        # item['mainpoi'] = base.get('geodata').get('aoi').get('mainpoi'),
-        item['navi_geametry'] = base.get('navi_geametry'),
-        item['new_keytype'] = base.get('new_keytype'),
-        item['new_type'] = base.get('new_type'),
-        item['tag'] = base.get('tag'),
-        item['building_types'] = base.get('building_types'),
-        # item['opening_data'] = base.get('opening_data'),
-        item['shape'] = res.get('data').get('spec').get('mining_shape').get('shape'),
-        item['center'] = res.get('data').get('spec').get('mining_shape').get('center'),
-        item['level'] = res.get('data').get('spec').get('mining_shape').get('level'),
+        try:
+            base = res['data']['base']
+            item['business'] = base.get('business'),
+            item['city_adcode'] = base.get('city_adcode'),
+            item['city_name'] = base.get('city_name'),
+            item['classify'] = base.get('classify'),
+            item['code'] = base.get('code'),
+            # item['area'] = res.get('data').get('spec').get('mining_shape').get('area'),
+            item['name'] = base.get('name'),
+            # item['mainpoi'] = base.get('geodata').get('aoi').get('mainpoi'),
+            item['navi_geametry'] = base.get('navi_geametry'),
+            item['new_keytype'] = base.get('new_keytype'),
+            item['new_type'] = base.get('new_type'),
+            item['tag'] = base.get('tag'),
+            item['building_types'] = base.get('building_types'),
+            # item['opening_data'] = base.get('opening_data'),
+            item['shape'] = res.get('data').get('spec').get('mining_shape').get('shape'),
+            item['center'] = res.get('data').get('spec').get('mining_shape').get('center'),
+            item['level'] = res.get('data').get('spec').get('mining_shape').get('level'),
+        except:
+            logger.debug('获取详情有误')
 
         yield item
 
