@@ -9,20 +9,25 @@ import pymysql
 from MapCrawler.sql_config import HOST,USER,PASSWD,PORT,DB,CHARSET
 
 class GaodeMapSceneDbOper():
+
+    TABLE_NAME="GaodeMapScene"
+
     def __init__(self):
         self.conn = pymysql.connect(host=HOST,
                                     port=PORT,
                                     user=USER,
                                     passwd=PASSWD,
                                     db=DB,
-                                    charset='utf8')
+                                    charset=CHARSET)
+        self.cursor = self.conn.cursor()
 
     def drop_table(self):
         """
 
         :return:
         """
-        pass
+        self.cursor.execute("drop table if exists %s"%self.TABLE_NAME)
+
 
     def create_table(self):
         """
@@ -30,23 +35,25 @@ class GaodeMapSceneDbOper():
         :return:
         """
         sql_str = """
-        create table GaodeMapScene(id CHAR(20) not Null,
+        create table %s (id CHAR(20) primary key,
                     province CHAR(50),
-                    city  CHAR(50),
+                    city CHAR(50),
                     name char(50),
                     city_adcode CHAR(6),
                     district CHAR(50),
                     address  CHAR(100),
-                    lang float,
+                    longtitude float,
                     lat float,
-                    type char(100),
+                    type11 char(100),
                     typecode char(6),
                     classify  char(100),
                     area float,
-                    shape varchar
-                    primary key id
-                    )
-        """
+                    floor int,
+                    shape text
+                    );"""%self.TABLE_NAME
+        self.cursor.execute(sql_str)
+
+
 
     def insert_item(self,items):
         """
@@ -54,7 +61,7 @@ class GaodeMapSceneDbOper():
         :param item:
         :return:
         """
-        pass
+        
 
     def delete_item(self,items):
         """
@@ -71,3 +78,11 @@ class GaodeMapSceneDbOper():
         :return:
         """
         pass
+
+
+if __name__=='__main__':
+    db = GaodeMapSceneDbOper()
+    db.create_table()
+    print('create talbe;')
+    db.drop_table()
+    print('drop table;')
