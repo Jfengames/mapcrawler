@@ -29,7 +29,7 @@ class MapcrawlerPipeline(object):
         self.items_to_add.append(item)
         logger.debug('收到新的item，等待插入数据库，当前队列里为%s'%len(self.items_to_add))
         if len(self.items_to_add) >= BATCH_INSERT_NUM:
-            self.db.insert_items(self.items_to_add)
+            self.db.replace_items(self.items_to_add)
             self.items_to_add.clear()
             logger.debug('批量插入数据库完成')
 
@@ -40,7 +40,7 @@ class MapcrawlerPipeline(object):
         # self.detail_file.close()
 
         if self.items_to_add:
-            self.db.insert_items(self.items_to_add)
+            self.db.replace_items(self.items_to_add)
             logger.debug('队列里的剩余item插入数据库')
 
 

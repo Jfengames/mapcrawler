@@ -105,7 +105,7 @@ class GaodeMapSceneDbOper():
         """
         pass
 
-    def replace_item(self,items):
+    def replace_items(self,items):
         """
 
         :param items:
