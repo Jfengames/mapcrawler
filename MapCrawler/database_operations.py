@@ -44,23 +44,57 @@ class GaodeMapSceneDbOper():
                     address  CHAR(100),
                     longtitude float,
                     lat float,
-                    type11 char(100),
+                    type char(100),
                     typecode char(6),
                     classify  char(100),
                     area float,
-                    floor int,
                     shape text
                     );"""%self.TABLE_NAME
         self.cursor.execute(sql_str)
 
 
 
-    def insert_item(self,items):
+    def insert_items(self, items):
         """
 
-        :param item:
+        :param item: items.PoiInfoItem
         :return:
         """
+        sql_str = """
+            insert into GaodeMapScene(id,
+                    province,
+                    city,
+                    name,
+                    city_adcode,
+                    district,
+                    address ,
+                    longtitude,
+                    lat,
+                    type,
+                    typecode,
+                    classify ,
+                    area,
+                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+        args = []
+        for i in items:
+            arg = (i['id'],\
+                   i['province'],\
+                   i['city'],\
+                   i['name'],\
+                   i['city_adcode'],\
+                   i['district'],\
+                   i['address'],\
+                   i['center_long'],\
+                   i['center_lat'],\
+                   i['type'],\
+                   i['typecode'],\
+                   i['classify'],\
+                   i['area'],\
+                   i['shape'])
+            args.append(arg)
+
+        self.cursor.executemany(sql_str,args)
+        self.conn.commit()
         
 
     def delete_item(self,items):
@@ -77,12 +111,68 @@ class GaodeMapSceneDbOper():
         :param items:
         :return:
         """
-        pass
+        sql_str = """
+            replace into GaodeMapScene(id,
+                    province,
+                    city,
+                    name,
+                    city_adcode,
+                    district,
+                    address ,
+                    longtitude,
+                    lat,
+                    type,
+                    typecode,
+                    classify ,
+                    area,
+                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+        args = []
+        for i in items:
+            arg = (i['id'], \
+                   i['province'], \
+                   i['city'], \
+                   i['name'], \
+                   i['city_adcode'], \
+                   i['district'], \
+                   i['address'], \
+                   i['center_long'], \
+                   i['center_lat'], \
+                   i['type'], \
+                   i['typecode'], \
+                   i['classify'], \
+                   i['area'], \
+                   i['shape'])
+            args.append(arg)
 
+        self.cursor.executemany(sql_str,args)
+        self.conn.commit()
+
+
+# class GaodeDistrictOper():
+#     TABLE_NAME = 'districts'
+#     def __init__(self):
+#
+#         self.conn = pymysql.connect(host=HOST,
+#                                     port=PORT,
+#                                     user=USER,
+#                                     passwd=PASSWD,
+#                                     db=DB,
+#                                     charset=CHARSET)
+#         self.cursor = self.conn.cursor()
+#
+#     def create_table(self):
+#         sql_str = """
+#         create table %s (adcode char(6),
+#                         province  CHAR(20),
+#                         name CHAR(20),
+#                         center char(50),
+#                         shape text)"""
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
     db.create_table()
     print('create talbe;')
-    db.drop_table()
-    print('drop table;')
+    # db.drop_table()
+    # print('drop table;')
+
+

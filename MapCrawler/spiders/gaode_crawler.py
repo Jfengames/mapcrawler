@@ -5,7 +5,7 @@ import scrapy
 from urllib import parse
 import json
 
-from MapCrawler.items import PoiAbstractItem, PoiDetailItem
+from MapCrawler.items import PoiInfoItem
 
 import logging
 logger = logging.getLogger(__name__)
@@ -64,9 +64,9 @@ class GaodeCrawler(scrapy.Spider):
 
         for poi in res['pois']:
             # 保存poi摘要信息
-            item = PoiAbstractItem()
-            item.update(poi)
-            yield item
+            # item = PoiInfoItem()
+            # item.update(poi)
+            # yield item
 
             # 生成每个poi的搜索url
             search_url = 'https://ditu.amap.com/detail/get/detail'
@@ -98,30 +98,28 @@ class GaodeCrawler(scrapy.Spider):
         :return:
         """
         res = json.loads(response.text)
+        item = PoiInfoItem()
         logger.debug('边界搜索url：%s\nresponse:%s'%(response.url,response.text))
-        item = PoiDetailItem()
         try:
             base = res['data']['base']
-            item['business'] = base.get('business'),
-            item['city_adcode'] = base.get('city_adcode'),
-            item['city_name'] = base.get('city_name'),
-            item['classify'] = base.get('classify'),
-            item['code'] = base.get('code'),
-            # item['area'] = res.get('data').get('spec').get('mining_shape').get('area'),
-            item['name'] = base.get('name'),
-            # item['mainpoi'] = base.get('geodata').get('aoi').get('mainpoi'),
-            item['navi_geametry'] = base.get('navi_geametry'),
-            item['new_keytype'] = base.get('new_keytype'),
-            item['new_type'] = base.get('new_type'),
-            item['tag'] = base.get('tag'),
-            item['building_types'] = base.get('building_types'),
-            # item['opening_data'] = base.get('opening_data'),
-            item['shape'] = res.get('data').get('spec').get('mining_shape').get('shape'),
-            item['center'] = res.get('data').get('spec').get('mining_shape').get('center'),
-            item['level'] = res.get('data').get('spec').get('mining_shape').get('level'),
+            item['id'] = base['poiid']
+            item['province'] = 'NULL'
+            item['city'] = base['city_name']
+            item['name'] = base['name']
+            item['city_adcode'] = base['city_adcode']
+            item['address'] = base['address']
+            item['district'] = base['bcs']
+            item['center_long'] = float(base['x'])
+            item['center_lat'] = float(base['y'])
+            item['type'] = base['new_keytype']
+            item['typecode'] = base['new_type']
+            item['classify'] = base['classify']
+            item['area'] = base.get('geadata',{}).get('aoi',{}).get('area') or 0
+            item['shape'] = res['data'].get('spec',{}).get('mining_shape',{}).get('shape') or 'NULL'
+
+            yield item
+
         except:
             logger.debug('获取详情有误')
-
-        yield item
 
 

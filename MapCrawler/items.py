@@ -72,3 +72,19 @@ class PoiDetailItem(scrapy.Item):
     shape = scrapy.Field() #
     center = scrapy.Field()
     level = scrapy.Field()
+
+class PoiInfoItem(scrapy.Item):
+    id = scrapy.Field()
+    province = scrapy.Field()
+    city = scrapy.Field()
+    name = scrapy.Field()
+    city_adcode = scrapy.Field()
+    address = scrapy.Field()
+    district = scrapy.Field()
+    center_long = scrapy.Field()
+    center_lat = scrapy.Field()
+    type = scrapy.Field()
+    typecode = scrapy.Field()
+    classify = scrapy.Field()
+    area = scrapy.Field()
+    shape = scrapy.Field()
