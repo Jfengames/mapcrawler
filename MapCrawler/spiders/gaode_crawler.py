@@ -89,7 +89,8 @@ class GaodeCrawler(scrapy.Spider):
         if current_poi_num < int(res['count']):
             query_para['page'] = current_page+1
             url = '%s?%s'%(_url,parse.urlencode(query_para))
-            return scrapy.Request(url,callback=self.parse_region_pois)
+            logger.debug('生成下一页：%s'%url)
+            yield scrapy.Request(url,callback=self.parse_region_pois)
 
     def parse_target_poi(self,response):
         """
@@ -114,7 +115,7 @@ class GaodeCrawler(scrapy.Spider):
             item['type'] = base['new_keytype']
             item['typecode'] = base['new_type']
             item['classify'] = base['classify']
-            item['area'] = base.get('geadata',{}).get('aoi',{}).get('area') or 0
+            item['area'] = base.get('geodata',{}).get('aoi',{})[0].get('area') or 0
             item['shape'] = res['data'].get('spec',{}).get('mining_shape',{}).get('shape') or 'NULL'
 
             yield item

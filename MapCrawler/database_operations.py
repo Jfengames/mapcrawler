@@ -147,6 +147,9 @@ class GaodeMapSceneDbOper():
         self.cursor.executemany(sql_str,args)
         self.conn.commit()
 
+    def __del__(self):
+        self.conn.close()
+
 
 # class GaodeDistrictOper():
 #     TABLE_NAME = 'districts'
@@ -170,7 +173,7 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
-    db.create_table()
+    # db.create_table()
     print('create talbe;')
     # db.drop_table()
     # print('drop table;')
