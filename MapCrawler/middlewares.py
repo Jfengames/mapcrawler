@@ -6,6 +6,7 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.exceptions import CloseSpider
 import requests
 import time
 import json
@@ -110,109 +111,41 @@ class MapcrawlerDownloaderMiddleware(object):
         spider.logger.info('Spider opened: %s' % spider.name)
 
 
-class AdslProxyMiddleware():
-    """
-    通过请求adsl拨号服务器建立proxy服务，并通过不断更换ip地址来避免被ban
-    """
 
-
-    def __init__(self,settings):
-        """
-        通过从固定ip服务器上获取代理服务器的ip地址。如果是固定ip服务器是本机，地址应为127.0.0.1:18888
-        :param settings:
-        :return:
-        """
-        self.settings = settings
-
-        self.adsl_ip_add_url = ADSL_IP_ADDR_URL
-        self.auth = ('ss_adsl','thisisproxyip')
-        self.re_fresh_proxy()
-
-    def re_fresh_proxy(self,old_prxy=None):
-        while True:
-            proxy_ip = requests.get(self.adsl_ip_add_url,auth=self.auth).text
-            self.proxy = proxy_ip
-            if self.proxy == old_prxy:
-                time.sleep(30)
-                continue
-            else:
-                break
-        logger.info('proxy ip地址从%s更新为-->%s'%(old_prxy,self.proxy))
-        return self.proxy
-
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        return cls(crawler.settings)
-
-
-    def process_request(self,request,spider):
-        # proxy = request.meta.get('proxy',None)
-        if request.meta.get('proxy'):
-            proxy = request.meta['proxy'].split('://')[1]
-        else:
-            proxy = None
-        # 使用最近的ip
-        if proxy != self.proxy:
-            request.meta['proxy'] = request.url.split('://')[0]+'://'+self.proxy
-
-        # logger.debug(request.url)
-        # logger.debug(request.meta['proxy'])
-        return
+class GaodeVerifyMiddleware(object):
+    # def process_request(self,request,spider):
+    #     pass
 
     def process_response(self,request,response,spider):
         """
-        验证resposne是否正确，如不正确，需要更换代理的ip，并重新请求request
+        1. 判断是否出现验证信息，出现too fast信息
+        2. 判断是否开始返回假数据，如已经开始返回假数据.
+            这部分需要每间隔几次请求之后，就加一个已知正确结果的请求，如果返回错误信息，则该批次都删掉。是否放到pipeline里去做？
 
         :param request:
         :param response:
         :param spider:
         :return:
         """
+        verify_info = {'id': 'B01730ISAP',
+                       'shape': '113.648035,34.803979;113.648025,34.805128;113.648042,34.805202;113.64812,34.805244;113.648236,34.805258;113.649989,34.805279;113.650049,34.805266;113.650081,34.805224;113.650091,34.804984;113.6501,34.804339;113.650101,34.804251;113.650065,34.804233;113.649274,34.804143;113.648357,34.804023;113.648035,34.803979'}
 
-        def is_correct(response):
-            """
-            判断response字段是否正确
-            :param response:
-            :return:
-            """
-            if 'http://restapi.amap.com' in response.url:
-                # 使用官方api
-                res = json.loads(response.text)
-                if res['status'] == '1' and res['info']=='OK':
-                    # and 'shape' in response.text:
-                    return True
-                else:
-                    return False
-            else:
-                # 非官方api
-                if 'shape' in response.text:
-                    return True
-                else:
-                    logger.debug('边界搜索中无shape字段\nurl:%s\nresponse:%s'%(response.url,response.text))
-                    return False
+        res = json.loads(response.text)
+        if 'too fast' == res['data']:
+            # 开启验证或更换ip
+            logger.warning('高德开启验证，请验证')
+            raise CloseSpider('高德开启验证，需要手动验证')
 
-        if is_correct(response):
-            # 结果正确，返回response
-            return response
-        else:
-            # 结果不正确，更新ip，重新请求
-            old_proxy = request.meta['proxy'].split('://')[1]
-            self.re_fresh_proxy(old_proxy)
-            request.meta['proxy'] = request.url.split('://')[0]+'://'+self.proxy
-            request.dont_filter = True
+        if res.get('data',{}).get('base',{}).get('poiid') == verify_info['id'] \
+            and res['data']['spec']['mining_shape']['shape'] != verify_info['shape']:
+            # 验证信息不对，高德返回假数据
+            logger.error('验证信息不符，数据有毒')
+            raise CloseSpider('高德回复假数据，停止爬虫')
 
-            # logger.debug(request.url)
-            # logger.debug(request.meta['proxy'])
-            return request
+            #开启验证或者更换ip
+
+        # 数据无异常
+        return response
 
 
-    def process_exception(self,request,exception,spider):
-        """
-        如果有异常，在这里处理
-        :param request:
-        :param exception:
-        :param spider:
-        :return:
-        """
 

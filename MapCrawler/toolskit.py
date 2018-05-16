@@ -4,8 +4,10 @@
 
 """
 坐标系转换……
-
+网格生成
 """
+import numpy as np
+
 
 def gcj2wgs(long,lat):
     assert type(long)==float,'经度数据类型需要为浮点型 '
@@ -43,3 +45,32 @@ def wgc2gcj(long,lat):
     pass
 
     return _long,_lat
+
+
+def generate_grids(start_long,start_lat,end_long,end_lat,resolution):
+    """
+    根据起始的经纬度和分辨率，生成需要需要的网格.
+    方向为左上，右下，所以resolution应为 负数，否则未空
+    :param start_long:
+    :param start_lat:
+    :param end_long:
+    :param end_lat:
+    :param resolution:
+    :return:
+    """
+    longs = np.arange(start_long,end_long,resolution)
+    if longs[-1] - end_long >0.0001:
+        longs = np.append(longs,end_long)
+    lats = np.arange(start_lat,end_lat,resolution)
+    if lats[-1] - end_lat >0.0001:
+        lats = np.append(lats,end_lat)
+
+    grids = []
+    pass;
+
+
+
+
+
+if __name__ == '__main__':
+    generate_grids(113.65267,34.808881,113.61000,34.79000,-0.01)
