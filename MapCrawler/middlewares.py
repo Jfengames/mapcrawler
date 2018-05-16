@@ -6,6 +6,7 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.exceptions import CloseSpider
 import requests
 import time
 import json
@@ -108,6 +109,43 @@ class MapcrawlerDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+
+class GaodeVerifyMiddleware(object):
+    # def process_request(self,request,spider):
+    #     pass
+
+    def process_response(self,request,response,spider):
+        """
+        1. 判断是否出现验证信息，出现too fast信息
+        2. 判断是否开始返回假数据，如已经开始返回假数据.
+            这部分需要每间隔几次请求之后，就加一个已知正确结果的请求，如果返回错误信息，则该批次都删掉。是否放到pipeline里去做？
+
+        :param request:
+        :param response:
+        :param spider:
+        :return:
+        """
+        verify_info = {'id': 'B01730ISAP',
+                       'shape': '113.648035,34.803979;113.648025,34.805128;113.648042,34.805202;113.64812,34.805244;113.648236,34.805258;113.649989,34.805279;113.650049,34.805266;113.650081,34.805224;113.650091,34.804984;113.6501,34.804339;113.650101,34.804251;113.650065,34.804233;113.649274,34.804143;113.648357,34.804023;113.648035,34.803979'}
+
+        res = json.loads(response.text)
+        if 'too fast' == res.get('data'):
+            # 开启验证或更换ip
+            logger.warning('高德开启验证，请验证')
+            raise CloseSpider('高德开启验证，需要手动验证')
+
+        if res.get('data',{}).get('base',{}).get('poiid') == verify_info['id'] \
+            and res['data']['spec']['mining_shape']['shape'] != verify_info['shape']:
+            # 验证信息不对，高德返回假数据
+            logger.error('验证信息不符，数据有毒')
+            raise CloseSpider('高德回复假数据，停止爬虫')
+
+            #开启验证或者更换ip
+
+        # 数据无异常
+        return response
 
 
 

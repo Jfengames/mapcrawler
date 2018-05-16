@@ -61,7 +61,7 @@ class GaodeMapSceneDbOper():
         :return:
         """
         sql_str = """
-            insert into GaodeMapScene(id,
+            insert into {}(id,
                     province,
                     city,
                     name,
@@ -74,7 +74,7 @@ class GaodeMapSceneDbOper():
                     typecode,
                     classify ,
                     area,
-                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""".format(self.TABLE_NAME)
         args = []
         for i in items:
             arg = (i['id'],\
@@ -97,6 +97,21 @@ class GaodeMapSceneDbOper():
         self.conn.commit()
         
 
+    def is_item_exist_by_id(self,id):
+        """
+
+        :param item:
+        :return:
+        """
+        sql_str = """
+        select * from {} where id =%s;""".format(self.TABLE_NAME)
+        self.cursor.execute(sql_str,id)
+
+        if self.cursor.fetchone():
+            return True
+        else:
+            return False
+
     def delete_item(self,items):
         """
 
@@ -112,7 +127,7 @@ class GaodeMapSceneDbOper():
         :return:
         """
         sql_str = """
-            replace into GaodeMapScene(id,
+            replace into {}(id,
                     province,
                     city,
                     name,
@@ -125,7 +140,7 @@ class GaodeMapSceneDbOper():
                     typecode,
                     classify ,
                     area,
-                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""".format(self.TABLE_NAME)
         args = []
         for i in items:
             arg = (i['id'], \
