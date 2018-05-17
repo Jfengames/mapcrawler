@@ -14,7 +14,7 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 
-ADSL_IP_ADDR_URL = 'http://223.105.3.170:18888'
+from MapCrawler.toolskit import AdslProxyServer
 
 class MapcrawlerSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -113,8 +113,28 @@ class MapcrawlerDownloaderMiddleware(object):
 
 
 class GaodeVerifyMiddleware(object):
-    # def process_request(self,request,spider):
-    #     pass
+    """
+    检查高德是否开启验证，并绕过验证
+    """
+    def __init__(self,settings):
+        self.assl_server = AdslProxyServer()
+
+
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler.settings)
+
+    def process_request(self,request,spider):
+        """
+        request上添加proxy
+        :param request:
+        :param spider:
+        :return:
+        """
+        proxy_pre = request.url.split('://')[0]+'://'
+        request.meta['proxy'] = proxy_pre + self.assl_server.get_proxy()
+        logger.debug('url：%s\n使用代理%s'%(request.url,request.meta['proxy']))
 
     def process_response(self,request,response,spider):
         """
@@ -134,18 +154,33 @@ class GaodeVerifyMiddleware(object):
         if 'too fast' == res.get('data'):
             # 开启验证或更换ip
             logger.warning('高德开启验证，请验证')
-            raise CloseSpider('高德开启验证，需要手动验证')
+            self.assl_server.refresh_proxy()
+            return request
+
+        if res.get('data', {}).get('base', {}).get('poiid') == verify_info['id']:
+            # for debug
+            pass
 
         if res.get('data',{}).get('base',{}).get('poiid') == verify_info['id'] \
             and res['data']['spec']['mining_shape']['shape'] != verify_info['shape']:
             # 验证信息不对，高德返回假数据
             logger.error('验证信息不符，数据有毒')
-            raise CloseSpider('高德回复假数据，停止爬虫')
+            self.assl_server.refresh_proxy()
+            return response
 
             #开启验证或者更换ip
 
         # 数据无异常
         return response
 
+    def process_exception(self,request,exception,spider):
+        """
+        可能出现的异常：
+            1. 代理地址已经更新
+        :param request:
+        :param exception:
+        :param spdier:
+        :return:
+        """
 
 

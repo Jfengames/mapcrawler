@@ -42,6 +42,7 @@ class MapcrawlerPipeline(object):
             if item['shape'] == verify_info['shape']:
                 # 没有收到假信息
                 # 更新数据库
+                logger.debug('信息验证无误，更新到数据库，更新数量为%s，并清空队列'%len(self.items_to_add))
                 self.db.replace_items(self.items_to_add)
                 self.items_to_add.clear()
 
@@ -52,6 +53,7 @@ class MapcrawlerPipeline(object):
         else:
             # 不是验证信息，放入队列
             self.items_to_add.append(item)
+            logger.debug('收到item，放入队列，当前队列长度%s'%len(self.items_to_add))
 
 
         return item

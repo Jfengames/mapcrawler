@@ -6,7 +6,7 @@
 """
 
 import pymysql
-from MapCrawler.sql_config import HOST,USER,PASSWD,PORT,DB,CHARSET
+from MapCrawler.config import HOST,USER,PASSWD,PORT,DB,CHARSET
 
 class GaodeMapSceneDbOper():
 
@@ -93,9 +93,11 @@ class GaodeMapSceneDbOper():
                    i['shape'])
             args.append(arg)
 
-        self.cursor.executemany(sql_str,args)
-        self.conn.commit()
-        
+        try:
+            self.cursor.executemany(sql_str,args)
+            self.conn.commit()
+        except:
+            self.conn.rollback()
 
     def is_item_exist_by_id(self,id):
         """
@@ -158,9 +160,12 @@ class GaodeMapSceneDbOper():
                    i['area'], \
                    i['shape'])
             args.append(arg)
-
-        self.cursor.executemany(sql_str,args)
-        self.conn.commit()
+        try:
+            self.cursor.executemany(sql_str,args)
+            self.conn.commit()
+        except e:
+            logger.warning('数据更新到数据库中有误：%s'%e)
+            self.conn.rollback()
 
     def __del__(self):
         self.conn.close()
@@ -188,7 +193,7 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
-    # db.create_table()
+    db.create_table()
     print('create talbe;')
     # db.drop_table()
     # print('drop table;')

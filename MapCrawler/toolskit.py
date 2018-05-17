@@ -7,6 +7,10 @@
 网格生成
 """
 import numpy as np
+import requests
+import time
+
+from MapCrawler.config import ADSL_SERVER_AUTH,ADSL_SERVER_URL
 
 
 def gcj2wgs(long,lat):
@@ -67,6 +71,31 @@ def generate_grids(start_long,start_lat,end_long,end_lat,resolution):
 
     grids = []
     pass;
+
+
+
+class AdslProxyServer():
+    def __init__(self):
+        self.adsl_server_url = ADSL_SERVER_URL
+        self.auth = ADSL_SERVER_AUTH
+        self.get_proxy()
+
+    def get_proxy(self):
+        proxy = requests.get(self.adsl_server_url,auth=self.auth).text
+        self.proxy = proxy
+        return proxy
+
+    def refresh_proxy(self,old_proxy=None):
+        old_proxy = old_proxy or self.proxy
+        proxy = self.get_proxy()
+        while proxy ==  old_proxy:
+            # 代理地址没变,等待1分钟
+            time.sleep(60)
+            proxy = self.get_proxy()
+        self.proxy = proxy
+        return proxy
+
+
 
 
 

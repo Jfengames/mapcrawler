@@ -12,9 +12,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+ITEMS_NEED_VERIFY = 20
+
 class GaodeCrawler(scrapy.Spider):
     name = 'GaoDe'
 
+    items_crawled = 0
 
     def start_requests(self):
         """
@@ -59,7 +62,8 @@ class GaodeCrawler(scrapy.Spider):
         """
         res = json.loads(response.text)
         if res['status'] == 0:
-            raise scrapy.exceptions.IgnoreRequest('info:'%res['info'])
+            logger.error('返回数据有误')
+
 
         _url,_para = response.url.split('?')
         query_para = parse.parse_qsl(_para)
@@ -83,12 +87,6 @@ class GaodeCrawler(scrapy.Spider):
             poi_url = '%s?%s'%(search_url,parse.urlencode(add_para))
             yield scrapy.Request(poi_url,callback=self.parse_target_poi)
 
-        # 重新生成一个已知正确信息的req，用于高德真假数据验证
-        para = {'id':'B01730ISAP'}
-        verify_url = '%s?%s'%(search_url,parse.urlencode(para))
-        verify_request=scrapy.Request(verify_url,callback=self.parse_target_poi)
-        verify_request.dont_filter = True
-        yield verify_request
 
         #检查是否有下一页
         # if query_para.get('page'):
@@ -98,6 +96,7 @@ class GaodeCrawler(scrapy.Spider):
         current_page = query_para.get('page') or 1
         current_poi_num = (int(current_page)-1)*int(query_para['offset']) + \
             len(res['pois'])
+        logger.debug('当前页面为%s，当前poi数量为%s，返回的count数为%s'%(current_page,current_poi_num,res['count']))
         if current_poi_num < int(res['count']):
             query_para['page'] = int(current_page)+1
             url = '%s?%s'%(_url,parse.urlencode(query_para))
@@ -121,7 +120,7 @@ class GaodeCrawler(scrapy.Spider):
             item['name'] = base['name']
             item['city_adcode'] = base['city_adcode']
             item['address'] = base['address']
-            item['district'] = base.get('bcs')
+            item['district'] = base.get('bcs','NULL')
             item['center_long'] = float(base['x'])
             item['center_lat'] = float(base['y'])
             item['type'] = base['new_keytype']
@@ -131,8 +130,18 @@ class GaodeCrawler(scrapy.Spider):
             item['shape'] = res['data'].get('spec',{}).get('mining_shape',{}).get('shape') or 'NULL'
 
             yield item
+            self.items_crawled+=1
 
         except:
             logger.debug('获取详情有误')
 
+
+        if self.items_crawled >= ITEMS_NEED_VERIFY:
+            # 重新生成一个已知正确信息的req，用于高德真假数据验证
+            para = {'id':'B01730ISAP'}
+            search_url = 'https://ditu.amap.com/detail/get/detail'
+            verify_url = '%s?%s'%(search_url,parse.urlencode(para))
+            logger.debug('生成验证url')
+            yield scrapy.Request(verify_url,dont_filter=True,callback=self.parse_target_poi)
+            self.items_crawled = 0
 
