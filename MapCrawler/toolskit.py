@@ -43,3 +43,17 @@ def wgc2gcj(long,lat):
     pass
 
     return _long,_lat
+
+def generate_grids(start_long,start_lat,end_long,end_lat,resolution):
+    grids_lib=[]
+    longs = np.arange(start_long,end_long,resolution)
+    if longs[-1] != end_long:
+        longs = np.append(longs,end_long)
+
+    lats = np.arange(start_lat,end_lat,-resolution)
+    if lats[-1] != end_lat:
+        lats = np.append(lats,end_lat)
+    for i in range(len(longs)-1):
+        for j in range(len(lats)-1):
+            grids_lib.append([[round(float(longs[i]),6),round(float(lats[j]),6)],[round(float(longs[i+1]),6),round(float(lats[j+1]),6)]])
+    return grids_lib 
