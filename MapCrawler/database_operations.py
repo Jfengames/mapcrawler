@@ -39,13 +39,13 @@ class GaodeMapSceneDbOper():
                     province CHAR(50),
                     city CHAR(50),
                     name char(50),
-                    city_adcode CHAR(6),
+                    city_adcode CHAR(20),
                     district CHAR(50),
                     address  CHAR(100),
                     longtitude float,
                     lat float,
                     type char(100),
-                    typecode char(6),
+                    typecode char(20),
                     classify  char(100),
                     area float,
                     shape text
@@ -163,7 +163,7 @@ class GaodeMapSceneDbOper():
         try:
             self.cursor.executemany(sql_str,args)
             self.conn.commit()
-        except e:
+        except Exception as e:
             logger.warning('数据更新到数据库中有误：%s'%e)
             self.conn.rollback()
 
@@ -193,9 +193,9 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
+    db.drop_table()
+    print('drop table;')
     db.create_table()
     print('create talbe;')
-    # db.drop_table()
-    # print('drop table;')
 
 

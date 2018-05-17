@@ -94,3 +94,7 @@ ITEM_PIPELINES = {
 # LOG_ENCODING='utf-8'
 LOG_LEVEL = 'DEBUG'
 
+
+SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
+SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
+

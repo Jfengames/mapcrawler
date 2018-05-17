@@ -5,11 +5,12 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
-from scrapy import signals
+from scrapy import signals,Request
 from scrapy.exceptions import CloseSpider
 import requests
 import time
 import json
+from urllib import parse
 
 import logging
 logger = logging.getLogger(__name__)
@@ -62,6 +63,41 @@ class MapcrawlerSpiderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class GaodeVerifySpiderMiddleware(object):
+    """
+    在这里，每隔一定数量的detail请求就加一次验证请求
+    """
+    POI_DETAIL_NUM_TO_BE_VERIFIED  = 20
+    SEARCH_URL = 'https://ditu.amap.com/detail/get/detail'
+    VERIFY_PARA = {'id':'B01730ISAP'}
+    VERIFY_URL = '%s?%s' % (SEARCH_URL, parse.urlencode(VERIFY_PARA))
+
+    def __init__(self):
+        self.poi_detail_num = 0
+
+    def process_spider_output(self,response,result,spider):
+        """
+        检查result中detail请求的个数，当满足POI_DETAIL_NUM_TO_BE_VERIFIED后，加入验证请求
+        :param response:
+        :param result:
+        :param spider:
+        :return:
+        """
+        for res in result:
+            if isinstance(res,Request):
+                if res.split('?')[0] == self.SEARCH_URL:
+                    # 这是个搜索边界的请求
+                    self.poi_detail_num += 1
+                    if self.poi_detail_num > self.POI_DETAIL_NUM_TO_BE_VERIFIED:
+                        # 已经达到验证数量，加一个验证请求
+                        yield Request(self.VERIFY_URl,dont_filter=True,callback=self.parse_target_poi)
+                        self.poi_detail_num = 0
+            # 原来的结果还要继续
+            yield res
+
+
 
 
 class MapcrawlerDownloaderMiddleware(object):

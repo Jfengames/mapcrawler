@@ -136,12 +136,4 @@ class GaodeCrawler(scrapy.Spider):
             logger.debug('获取详情有误')
 
 
-        if self.items_crawled >= ITEMS_NEED_VERIFY:
-            # 重新生成一个已知正确信息的req，用于高德真假数据验证
-            para = {'id':'B01730ISAP'}
-            search_url = 'https://ditu.amap.com/detail/get/detail'
-            verify_url = '%s?%s'%(search_url,parse.urlencode(para))
-            logger.debug('生成验证url')
-            yield scrapy.Request(verify_url,dont_filter=True,callback=self.parse_target_poi)
-            self.items_crawled = 0
 
