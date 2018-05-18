@@ -75,7 +75,8 @@ class GaodeCrawler(scrapy.Spider):
 
         search_url = 'https://ditu.amap.com/detail/get/detail'
         for poi in res['pois']:
-            if self.db.is_item_exist_by_id(poi['id']):
+            if self.db.is_item_exist_by_id(poi['id'])\
+                    and not self.db.is_shape_null(poi['id']):
                 continue
 
             # 生成每个poi的搜索url

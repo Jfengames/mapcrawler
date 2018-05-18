@@ -87,12 +87,13 @@ class GaodeVerifySpiderMiddleware(object):
         """
         for res in result:
             if isinstance(res,Request):
-                if res.split('?')[0] == self.SEARCH_URL:
+                if res.url.split('?')[0] == self.SEARCH_URL:
                     # 这是个搜索边界的请求
                     self.poi_detail_num += 1
                     if self.poi_detail_num > self.POI_DETAIL_NUM_TO_BE_VERIFIED:
                         # 已经达到验证数量，加一个验证请求
-                        yield Request(self.VERIFY_URl,dont_filter=True,callback=self.parse_target_poi)
+                        logger.debug('生成验证URL.')
+                        yield Request(self.VERIFY_URL,dont_filter=True,callback=spider.parse_target_poi)
                         self.poi_detail_num = 0
             # 原来的结果还要继续
             yield res

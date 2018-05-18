@@ -114,6 +114,23 @@ class GaodeMapSceneDbOper():
         else:
             return False
 
+    def is_shape_null(self,id):
+        """
+
+        :param id:
+        :return:
+        """
+        sql_str = """
+        select shape from {} where id =%s;""".format(self.TABLE_NAME)
+        self.cursor.execute(sql_str,id)
+
+        res, = self.cursor.fetchone()
+        if res == 'NULL':
+            return True
+        else:
+            return False
+
+
     def delete_item(self,items):
         """
 
@@ -193,9 +210,12 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
-    db.drop_table()
-    print('drop table;')
-    db.create_table()
-    print('create talbe;')
+    # db.drop_table()
+    # print('drop table;')
+    # db.create_table()
+    # print('create talbe;')
+    print(db.is_shape_null('B017304CB1'))
+
+
 
 
