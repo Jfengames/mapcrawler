@@ -48,7 +48,7 @@ class MapcrawlerPipeline(object):
 
             else:
                 #收到假信息
-                logger.error('信息验证未通过，需要丢弃队列信息')
+                logger.info('信息验证未通过，需要丢弃队列信息（丢弃%s个）。'%len(self.items_to_add))
                 self.items_to_add.clear()
         else:
             # 不是验证信息，放入队列
