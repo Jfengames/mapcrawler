@@ -91,9 +91,9 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
-# LOG_FILE = 'mapcrawler.log'
-# LOG_ENCODING='utf-8'
-LOG_LEVEL = 'DEBUG'
+LOG_FILE = 'mapcrawler.log'
+LOG_ENCODING='utf-8'
+LOG_LEVEL = 'INFO'
 
 
 SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
