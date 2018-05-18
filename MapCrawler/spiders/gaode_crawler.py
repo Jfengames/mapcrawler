@@ -11,8 +11,8 @@ from MapCrawler.database_operations import GaodeMapSceneDbOper
 import logging
 logger = logging.getLogger(__name__)
 
+from MapCrawler.toolskit import generate_grids
 
-ITEMS_NEED_VERIFY = 20
 
 class GaodeCrawler(scrapy.Spider):
     name = 'GaoDe'
@@ -41,14 +41,12 @@ class GaodeCrawler(scrapy.Spider):
             # 'city':'郑州',
             # 'citylimit':'true'
         }
-        grids = ['113.652670,34.808881,113.642670,34.798881',
-                 '113.642670,34.898881,113.632670,34.788881',
-                 '113.632670,34.888881,113.622670,34.778881',
-                 '113.622670,34.878881,113.612670,34.768881',
-                 '113.612670,34.868881,113.602670,34.758881',
-                 ]
+
+        scrope = [113.652670,34.808881,113.692670,34.758881]
+        grids = generate_grids(*scrope,resolution=0.01)
+
         for grid in grids:
-            parameters['polygon']=grid
+            parameters['polygon']= ','.join([str(i) for i in grid])
             url = '%s?%s'%(urls_prex,parse.urlencode(parameters))
             # logger.info('产生区域搜索请求：%s'%url)
             yield scrapy.Request(url,callback=self.parse_region_pois)

@@ -62,16 +62,23 @@ def generate_grids(start_long,start_lat,end_long,end_lat,resolution):
     :param resolution:
     :return:
     """
+    assert start_long < end_long,'需要从左上到右下设置经度，start的经度应小于end的经度'
+    assert start_lat > end_lat,'需要从左上到右下设置纬度，start的纬度应大于end的纬度'
+    assert resolution>0,'resolution应大于0'
+
+
+    grids_lib=[]
     longs = np.arange(start_long,end_long,resolution)
-    if longs[-1] - end_long >0.0001:
+    if longs[-1] != end_long:
         longs = np.append(longs,end_long)
-    lats = np.arange(start_lat,end_lat,resolution)
-    if lats[-1] - end_lat >0.0001:
+
+    lats = np.arange(start_lat,end_lat,-resolution)
+    if lats[-1] != end_lat:
         lats = np.append(lats,end_lat)
-
-    grids = []
-    pass;
-
+    for i in range(len(longs)-1):
+        for j in range(len(lats)-1):
+            grids_lib.append([round(float(longs[i]),6),round(float(lats[j]),6),round(float(longs[i+1]),6),round(float(lats[j+1]),6)])
+    return grids_lib
 
 
 class AdslProxyServer():
@@ -99,7 +106,8 @@ class AdslProxyServer():
 
 
 
-
-
 if __name__ == '__main__':
-    generate_grids(113.65267,34.808881,113.61000,34.79000,-0.01)
+    scrope = [113.652670, 34.808881, 113.692670, 34.758881]
+    a = generate_grids(*scrope,0.01)
+
+    print(a)
