@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from MapCrawler.toolskit import generate_grids
-
+from MapCrawler.config import KEY
 
 class GaodeCrawler(scrapy.Spider):
     name = 'GaoDe'
@@ -32,7 +32,7 @@ class GaodeCrawler(scrapy.Spider):
         urls_prex ='http://restapi.amap.com/v3/place/polygon'
 
         parameters = {
-            'key':'f628174cf3d63d9a3144590d81966cbd',
+            'key':KEY,
             # 'polygon':'113.652670,34.808881,113.642670,34.798881',
             'types':'120000',# 居民区
             'offset':20,#每页最大数据
