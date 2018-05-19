@@ -5,6 +5,7 @@ import scrapy
 from scrapy.exceptions import CloseSpider
 from urllib import parse
 import json
+import os
 
 from MapCrawler.items import PoiInfoItem
 from MapCrawler.database_operations import GaodeMapSceneDbOper
@@ -25,6 +26,8 @@ class GaodeCrawler(scrapy.Spider):
     items_crawled = 0
 
     grid_num = 0
+    start_crawl_grid_file = 'start_grid.json'
+    start_grid = 0
 
     def start_requests(self):
         """
@@ -37,6 +40,11 @@ class GaodeCrawler(scrapy.Spider):
         self.db= GaodeMapSceneDbOper()
         self.keys = self._next_key()
         self.key_using = self.next_key()
+        if os.path.exists(self.start_crawl_grid_file):
+            with open(self.start_crawl_grid_file,'r') as fh:
+                self.start_grid = json.load(fh)['start_grid']
+        else:
+            self.start_grid = 0
 
 
         parameters = {
@@ -53,6 +61,11 @@ class GaodeCrawler(scrapy.Spider):
         zhengzhou_grids = city_grids(ZHENGZHENGPOLYLINE,0.01)
 
         for grid in zhengzhou_grids:
+            if self.grid_num < self.start_grid:
+                # 小于栅格起始数，跳过
+                self.grid_num += 1
+                continue
+
             logger.info('请求第%s个网格'%self.grid_num)
             self.grid_num+=1
             parameters['polygon']= ','.join([str(i) for i in grid])
@@ -71,6 +84,9 @@ class GaodeCrawler(scrapy.Spider):
         if res['status'] == '0':
             logger.error('返回数据有误')
             if res['info'] == 'DAILY_QUERY_OVER_LIMIT':
+                with open(self.start_crawl_grid_file, 'w') as fh:
+                    json.dump({'start_grid':self.start_grid},fh)
+
                 raise CloseSpider('所有Key都已超限')
 
 
