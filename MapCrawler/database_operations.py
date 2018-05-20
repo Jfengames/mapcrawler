@@ -7,6 +7,9 @@
 
 import pymysql
 from MapCrawler.config import HOST,USER,PASSWD,PORT,DB,CHARSET
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GaodeMapSceneDbOper():
 
