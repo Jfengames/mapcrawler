@@ -38,16 +38,16 @@ class GaodeMapSceneDbOper():
         create table %s (id CHAR(20) primary key,
                     province CHAR(50),
                     city CHAR(50),
-                    name char(50),
+                    name CHAR(50),
                     city_adcode CHAR(20),
                     district CHAR(50),
                     address  CHAR(100),
-                    longtitude float,
-                    lat float,
-                    type char(100),
-                    typecode char(20),
-                    classify  char(100),
-                    area float,
+                    longtitude DOUBLE,
+                    lat DOUBLE,
+                    type CHAR(100),
+                    typecode CHAR(20),
+                    classify  CHAR(100),
+                    area DOUBLE,
                     shape text
                     );"""%self.TABLE_NAME
         self.cursor.execute(sql_str)
