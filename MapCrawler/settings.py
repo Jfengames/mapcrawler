@@ -57,6 +57,7 @@ SPIDER_MIDDLEWARES = {
 DOWNLOADER_MIDDLEWARES = {
 #    'MapCrawler.middlewares.AdslProxyMiddleware': 543,
     'MapCrawler.middlewares.GaodeVerifyMiddleware': 300,
+    'MapCrawler.middlewares.ApiQueryLimitedMiddleware': 400
 }
 
 # Enable or disable extensions
@@ -91,9 +92,11 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
-# LOG_FILE = 'mapcrawler.log'
-# LOG_ENCODING='utf-8'
-LOG_LEVEL = 'INFO'
+LOG_FILE = 'mapcrawler.log'
+LOG_ENCODING='utf-8'
+LOG_LEVEL = 'DEBUG'
+
+
 
 
 SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
