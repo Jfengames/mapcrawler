@@ -83,8 +83,8 @@ class GaodeCrawler(scrapy.Spider):
         res = json.loads(response.text)
         if res['status'] == '0':
             if res['info'] == 'DAILY_QUERY_OVER_LIMIT':
-                with open(self.start_crawl_grid_file, 'w') as fh:
-                    json.dump({'start_grid':self.start_grid},fh)
+                # with open(self.start_crawl_grid_file, 'w') as fh:
+                #     json.dump({'start_grid':self.start_grid},fh)
 
                 raise CloseSpider('所有Key都已超限')
             logger.error('返回数据有误')

@@ -62,6 +62,11 @@ class MapcrawlerPipeline(object):
         # self.abstract_file.close()
         # self.detail_file.close()
 
+        # 记录下来爬到哪个网格上。
+        with open(spider.start_crawl_grid_file, 'w') as fh:
+            json.dump({'start_grid': spider.start_grid}, fh)
+
+
         if self.items_to_add:
             self.db.replace_items(self.items_to_add)
             logger.debug('队列里的剩余item插入数据库')
