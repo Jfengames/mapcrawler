@@ -97,6 +97,7 @@ class GaodeMapSceneDbOper():
             args.append(arg)
 
         try:
+            self.conn.ping(reconnect=True) #确保连接
             self.cursor.executemany(sql_str,args)
             self.conn.commit()
         except:
@@ -110,6 +111,7 @@ class GaodeMapSceneDbOper():
         """
         sql_str = """
         select * from {} where id =%s;""".format(self.TABLE_NAME)
+        self.conn.ping(reconnect=True) #确保连接
         self.cursor.execute(sql_str,id)
 
         if self.cursor.fetchone():
@@ -125,6 +127,7 @@ class GaodeMapSceneDbOper():
         """
         sql_str = """
         select shape from {} where id =%s;""".format(self.TABLE_NAME)
+        self.conn.ping(reconnect=True) #确保连接
         self.cursor.execute(sql_str,id)
 
         res, = self.cursor.fetchone()
@@ -181,6 +184,7 @@ class GaodeMapSceneDbOper():
                    i['shape'])
             args.append(arg)
         try:
+            self.conn.ping(reconnect=True) #确保连接
             self.cursor.executemany(sql_str,args)
             self.conn.commit()
         except Exception as e:
@@ -213,11 +217,11 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
-    # db.drop_table()
-    # print('drop table;')
-    # db.create_table()
-    # print('create talbe;')
-    print(db.is_shape_null('B017304CB1'))
+    db.drop_table()
+    print('drop table;')
+    db.create_table()
+    print('create talbe;')
+    # print(db.is_shape_null('B017304CB1'))
 
 
 
