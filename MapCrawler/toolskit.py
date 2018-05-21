@@ -80,6 +80,65 @@ def generate_grids(start_long,start_lat,end_long,end_lat,resolution):
             grids_lib.append([round(float(longs[i]),6),round(float(lats[j]),6),round(float(longs[i+1]),6),round(float(lats[j+1]),6)])
     return grids_lib
 
+def bounding_box(json):
+    polyline=json['polyline'].split(';')
+    polyline_s=[]
+    polyline_s1=[]
+    polyline_s2=[]
+    bounding=[]
+    for i in range(len(polyline)):
+        polyline_s.append(polyline[i].split(','))
+    
+    for j in range(len(polyline_s)):
+        polyline_s1.append(float(polyline_s[j][0]))
+        polyline_s2.append(float(polyline_s[j][1]))
+    
+    bounding=[max(polyline_s1),min(polyline_s1),max(polyline_s2),min(polyline_s2)]
+    print(bounding)
+    return bounding
+
+
+def IsPtInPoly(aLon, aLat, pointList):  
+    ''''' 
+    :param aLon: double 经度 
+    :param aLat: double 纬度 
+    :param pointList: list [(lon, lat)...] 多边形点的顺序需根据顺时针或逆时针，不能乱 
+    '''  
+      
+    iSum = 0  
+    iCount = len(pointList)  
+      
+    if(iCount < 3):  
+        return False  
+      
+      
+    for i in range(iCount):  
+          
+        pLon1 = pointList[i][0]  
+        pLat1 = pointList[i][1]  
+          
+        if(i == iCount - 1):  
+              
+            pLon2 = pointList[0][0]  
+            pLat2 = pointList[0][1]  
+        else:  
+            pLon2 = pointList[i + 1][0]  
+            pLat2 = pointList[i + 1][1]  
+          
+        if ((aLat >= pLat1) and (aLat < pLat2)) or ((aLat>=pLat2) and (aLat < pLat1)):  
+              
+            if (abs(pLat1 - pLat2) > 0):  
+                  
+                pLon = pLon1 - ((pLon1 - pLon2) * (pLat1 - aLat)) / (pLat1 - pLat2);  
+                  
+                if(pLon < aLon):  
+                    iSum += 1  
+  
+    if(iSum % 2 != 0):  
+        return True  
+    else:  
+        return False 
+
 
 class AdslProxyServer():
     def __init__(self):
