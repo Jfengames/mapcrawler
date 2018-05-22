@@ -88,21 +88,28 @@ class AdslProxyServer():
     def __init__(self):
         self.adsl_server_url = ADSL_SERVER_URL
         self.auth = ADSL_SERVER_AUTH
+        self.used_proxies = []
         self.get_proxy()
 
     def get_proxy(self):
-        proxy = requests.get(self.adsl_server_url,auth=self.auth).text
+        proxy = self._get_proxy()
+        if not proxy in self.used_proxies:
+            self.used_proxies.append(proxy)
         self.proxy = proxy
         return proxy
 
-    def refresh_proxy(self,old_proxy=None):
-        old_proxy = old_proxy or self.proxy
-        proxy = self.get_proxy()
-        while proxy ==  old_proxy:
-            # 代理地址没变,等待1分钟
+    def _get_proxy(self):
+        proxy = requests.get(self.adsl_server_url,auth=self.auth).text
+        return proxy
+
+    def refresh_proxy(self):
+        proxy = self._get_proxy()
+        while proxy in self.used_proxies:
+            # 代理地址已经使用过,等待1分钟
             time.sleep(60)
-            proxy = self.get_proxy()
+            proxy = self._get_proxy()
         self.proxy = proxy
+        self.used_proxies.append(proxy)
         return proxy
 
 
@@ -157,6 +164,12 @@ if __name__ == '__main__':
     # a = is_contained(shape,points)
 
     # print([i for i in a])
-    a = city_grids(ZHENGZHENGPOLYLINE,0.01)
-    for i in a:
-        print(i)
+    # a = city_grids(ZHENGZHENGPOLYLINE,0.01)
+    # count = 0
+    # for i in a:
+    #     print(count)
+    #     count+=1
+    #     print(i)
+    proxy_adsl = AdslProxyServer()
+    print(proxy_adsl.get_proxy())
+    print(proxy_adsl.refresh_proxy())
