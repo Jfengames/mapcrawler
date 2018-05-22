@@ -13,7 +13,7 @@ from MapCrawler.database_operations import GaodeMapSceneDbOper
 import logging
 logger = logging.getLogger(__name__)
 
-from MapCrawler.toolskit import city_grids,ZHENGZHENGPOLYLINE
+from MapCrawler.toolskit import generate_city_grids,CITY_POLYLINE
 from MapCrawler.config import KEYS
 
 
@@ -58,9 +58,10 @@ class GaodeCrawler(scrapy.Spider):
             # 'citylimit':'true'
         }
 
-        zhengzhou_grids = city_grids(ZHENGZHENGPOLYLINE,0.01)
+        city_grids = generate_city_grids(CITY_POLYLINE, 0.01)
 
-        for grid in zhengzhou_grids:
+
+        for grid in city_grids:
             if self.grid_num < self.start_grid:
                 # 小于栅格起始数，跳过
                 self.grid_num += 1
