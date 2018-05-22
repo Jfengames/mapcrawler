@@ -277,7 +277,7 @@ class ApiQueryLimitedMiddleware(object):
                     # 使用新的key，重新调度
                     query_para['key'] = spider.key_using
                     new_url = '%s?%s'%(_url,parse.urlencode(query_para))
-                    logger.debug('检查到KEY查询上限，使用新的key重新请求')
+                    logger.info('检查到KEY查询上限，使用新的key重新请求：%s'%spider.key_using)
                     return request.replace(url = new_url)
 
                 except StopIteration:
@@ -287,7 +287,7 @@ class ApiQueryLimitedMiddleware(object):
             else:
                 query_para['key'] = spider.key_using
                 new_url = '%s?%s'%(_url,parse.urlencode(query_para))
-                logger.debug('请求中的key为旧的已超限的key，使用新的key重新请求')
+                logger.info('请求中的key为旧的已超限的key，使用新的key重新请求:%s')
                 return request.replace(url = new_url)
 
         return response
