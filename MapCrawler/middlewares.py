@@ -155,7 +155,7 @@ class GaodeVerifyMiddleware(object):
     检查高德是否开启验证，并绕过验证
     """
     def __init__(self,settings):
-        self.assl_server = AdslProxyServer()
+        self.adsl_server = AdslProxyServer()
 
 
 
@@ -171,7 +171,7 @@ class GaodeVerifyMiddleware(object):
         :return:
         """
         proxy_pre = request.url.split('://')[0]+'://'
-        request.meta['proxy'] = proxy_pre + self.assl_server.get_proxy()
+        request.meta['proxy'] = proxy_pre + self.adsl_server.get_proxy()
         logger.debug('url：%s\n使用代理%s'%(request.url,request.meta['proxy']))
 
     def process_response(self,request,response,spider):
@@ -192,7 +192,7 @@ class GaodeVerifyMiddleware(object):
         if 'too fast' == res.get('data'):
             # 开启验证或更换ip
             logger.warning('高德开启验证，请验证')
-            self.assl_server.refresh_proxy()
+            self.adsl_server.refresh_proxy()
             return request
 
 
@@ -200,7 +200,7 @@ class GaodeVerifyMiddleware(object):
             and res['data']['spec']['mining_shape']['shape'] != verify_info['shape']:
             # 验证信息不对，高德返回假数据
             logger.error('验证信息不符，数据有毒')
-            self.assl_server.refresh_proxy()
+            self.adsl_server.refresh_proxy()
             return response
 
             #开启验证或者更换ip
@@ -220,9 +220,9 @@ class GaodeVerifyMiddleware(object):
         logger.debug('出现异常！')
         logger.debug(exception)
         using_proxy = request.meta['proxy'].split('://')[1]
-        if using_proxy == self.assl_server.proxy:
+        if using_proxy == self.adsl_server.proxy:
             # 使用当前的ip产生的异常，需要更换ip
-            self.assl_server.refresh_proxy()
+            self.adsl_server.refresh_proxy()
 
         return request
 
