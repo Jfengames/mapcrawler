@@ -195,9 +195,6 @@ class GaodeVerifyMiddleware(object):
             self.assl_server.refresh_proxy()
             return request
 
-        if res.get('data', {}).get('base', {}).get('poiid') == verify_info['id']:
-            # for debug
-            pass
 
         if res.get('data',{}).get('base',{}).get('poiid') == verify_info['id'] \
             and res['data']['spec']['mining_shape']['shape'] != verify_info['shape']:
@@ -220,6 +217,15 @@ class GaodeVerifyMiddleware(object):
         :param spdier:
         :return:
         """
+        logger.debug('出现异常！')
+        logger.debug(exception)
+        using_proxy = request.meta['proxy'].split('://')[1]
+        if using_proxy == self.assl_server.proxy:
+            # 使用当前的ip产生的异常，需要更换ip
+            self.assl_server.refresh_proxy()
+
+        return request
+
 
 class ApiQueryLimitedMiddleware(object):
     """
