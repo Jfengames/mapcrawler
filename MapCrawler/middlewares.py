@@ -287,7 +287,7 @@ class ApiQueryLimitedMiddleware(object):
             else:
                 query_para['key'] = spider.key_using
                 new_url = '%s?%s'%(_url,parse.urlencode(query_para))
-                logger.info('请求中的key为旧的已超限的key，使用新的key重新请求:%s')
+                logger.debug('请求中的key为旧的已超限的key，使用新的key重新请求:%s'%spider.key_using)
                 return request.replace(url = new_url)
 
         return response
