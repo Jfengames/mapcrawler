@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 class GaodeMapSceneDbOper():
 
-    TABLE_NAME="GaodeMap_DistrictShape"
+    TABLE_NAME="GaodeMapScene"
+    DISTRICT_NAME = 'GaodeMap_DistrictShape'
 
     def __init__(self):
         self.conn = pymysql.connect(host=HOST,
@@ -118,14 +119,14 @@ class GaodeMapSceneDbOper():
             return True
         else:
             return False
-    def is_item_selected_polyline(self,adcode):
+    def select_city_polyline(self, adcode):
         """
 
         :param item:
         :return:
         """
         sql_str = """
-        select * from {} where adcode =%s;""".format(self.TABLE_NAME)
+        select * from {} where adcode =%s;""".format(self.DISTRICT_NAME)
         self.cursor.execute(sql_str,adcode)
         res = self.cursor.fetchone()
         return res[5]

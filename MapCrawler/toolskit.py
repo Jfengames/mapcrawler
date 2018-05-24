@@ -191,7 +191,7 @@ def is_contained(shape,points):
     return pth.contains_points(points,radius=-0.00001)
 
 # 西安
-CITY_POLYLINE= GaodeMapSceneDbOper().is_item_selected_polyline('110000')
+CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline('350200')
 def generate_city_grids(city_polyline, resolution):
     """
     输入城市边界，根据栅格长度返回在城市边界内的栅格
@@ -199,7 +199,7 @@ def generate_city_grids(city_polyline, resolution):
     :param resolution:
     :return:
     """
-    city_vertexes =np.array([float(i) for i in city_polyline.replace(';',',').split(',')]).reshape(-1,2)
+    city_vertexes =np.array([float(i) for i in city_polyline.replace('|',';').replace(';',',').split(',')]).reshape(-1,2)
     max_long = max(city_vertexes[:,0])
     min_long = min(city_vertexes[:,0])
     max_lat = max(city_vertexes[:,1])
