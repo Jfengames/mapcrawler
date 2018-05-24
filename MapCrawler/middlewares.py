@@ -217,8 +217,8 @@ class GaodeVerifyMiddleware(object):
         :param spdier:
         :return:
         """
-        logger.debug('出现异常！')
-        logger.debug(exception)
+        logger.warning('出现异常:%s'%request.url)
+        logger.warning(exception)
         using_proxy = request.meta['proxy'].split('://')[1]
         if using_proxy == self.adsl_server.proxy:
             # 使用当前的ip产生的异常，需要更换ip
