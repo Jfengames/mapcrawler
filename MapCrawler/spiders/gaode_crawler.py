@@ -2,8 +2,10 @@
 #coding=utf-8
 
 import scrapy
+from scrapy.exceptions import CloseSpider
 from urllib import parse
 import json
+import os
 
 from MapCrawler.items import PoiInfoItem
 from MapCrawler.database_operations import GaodeMapSceneDbOper
@@ -11,13 +13,21 @@ from MapCrawler.database_operations import GaodeMapSceneDbOper
 import logging
 logger = logging.getLogger(__name__)
 
-from MapCrawler.toolskit import generate_grids
-from MapCrawler.config import KEY
+from MapCrawler.toolskit import generate_city_grids,CITY_POLYLINE
+from MapCrawler.config import KEYS
+
 
 class GaodeCrawler(scrapy.Spider):
     name = 'GaoDe'
 
+    urls_prex ='http://restapi.amap.com/v3/place/polygon'
+    search_url = 'https://ditu.amap.com/detail/get/detail'
+
     items_crawled = 0
+
+    grid_num = 0
+    start_crawl_grid_file = 'start_grid.json'
+    start_grid = 0
 
     def start_requests(self):
         """
@@ -28,26 +38,39 @@ class GaodeCrawler(scrapy.Spider):
         # start_long_lat = '34.808881,113.652670'
         # resolution = 0.01 # 直接加到经纬度上，大概1km
         self.db= GaodeMapSceneDbOper()
+        self.keys = self._next_key()
+        self.key_using = self.next_key()
+        if os.path.exists(self.start_crawl_grid_file):
+            with open(self.start_crawl_grid_file,'r') as fh:
+                self.start_grid = json.load(fh)['start_grid']
+        else:
+            self.start_grid = 0
 
-        urls_prex ='http://restapi.amap.com/v3/place/polygon'
 
         parameters = {
-            'key':KEY,
             # 'polygon':'113.652670,34.808881,113.642670,34.798881',
             'types':'120000',# 居民区
             'offset':20,#每页最大数据
+            'key':self.key_using
 
             # 'children':1,
             # 'city':'郑州',
             # 'citylimit':'true'
         }
 
-        scrope = [113.652670,34.808881,113.692670,34.758881]
-        grids = generate_grids(*scrope,resolution=0.01)
+        city_grids = generate_city_grids(CITY_POLYLINE, 0.01)
 
-        for grid in grids:
+
+        for grid in city_grids:
+            if self.grid_num < self.start_grid:
+                # 小于栅格起始数，跳过
+                self.grid_num += 1
+                continue
+
+            logger.info('请求第%s个网格'%self.grid_num)
+            self.grid_num+=1
             parameters['polygon']= ','.join([str(i) for i in grid])
-            url = '%s?%s'%(urls_prex,parse.urlencode(parameters))
+            url = '%s?%s'%(self.urls_prex,parse.urlencode(parameters))
             # logger.info('产生区域搜索请求：%s'%url)
             yield scrapy.Request(url,callback=self.parse_region_pois)
 
@@ -59,7 +82,12 @@ class GaodeCrawler(scrapy.Spider):
         :return:
         """
         res = json.loads(response.text)
-        if res['status'] == 0:
+        if res['status'] == '0':
+            if res['info'] == 'DAILY_QUERY_OVER_LIMIT':
+                # with open(self.start_crawl_grid_file, 'w') as fh:
+                #     json.dump({'start_grid':self.start_grid},fh)
+
+                raise CloseSpider('所有Key都已超限')
             logger.error('返回数据有误')
 
 
@@ -71,8 +99,7 @@ class GaodeCrawler(scrapy.Spider):
             'citylimit':'true',
         }
 
-        search_url = 'https://ditu.amap.com/detail/get/detail'
-        for poi in res['pois']:
+        for poi in res.get('pois'):
             if self.db.is_item_exist_by_id(poi['id'])\
                     and not self.db.is_shape_null(poi['id']):
                 continue
@@ -83,7 +110,7 @@ class GaodeCrawler(scrapy.Spider):
                         'citylimit':'true',
                         'id':poi['id']}
             add_para.update(parameters)
-            poi_url = '%s?%s'%(search_url,parse.urlencode(add_para))
+            poi_url = '%s?%s'%(self.search_url,parse.urlencode(add_para))
             yield scrapy.Request(poi_url,callback=self.parse_target_poi)
 
 
@@ -135,4 +162,19 @@ class GaodeCrawler(scrapy.Spider):
             logger.debug('获取详情有误')
 
 
+    def next_key(self):
+        """
+        每次换一次key
+        :return:
+        """
+        _k = next(self.keys)
+        logger.debug('使用下一个key:%s'%_k)
+        return _k
 
+    def _next_key(self):
+        """
+        key的迭代器
+        :return:
+        """
+        for k in KEYS:
+            yield k

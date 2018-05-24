@@ -5,7 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-from MapCrawler.items import PoiInfoItem
+import json
 from MapCrawler.database_operations import GaodeMapSceneDbOper
 
 import logging
@@ -61,6 +61,11 @@ class MapcrawlerPipeline(object):
     def close_spider(self,spider):
         # self.abstract_file.close()
         # self.detail_file.close()
+
+        # 记录下来爬到哪个网格上。
+        with open(spider.start_crawl_grid_file, 'w') as fh:
+            json.dump({'start_grid': spider.grid_num}, fh)
+
 
         if self.items_to_add:
             self.db.replace_items(self.items_to_add)

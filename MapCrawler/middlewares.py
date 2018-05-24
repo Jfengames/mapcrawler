@@ -16,6 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from MapCrawler.toolskit import AdslProxyServer
+from MapCrawler.config import KEYS
 
 class MapcrawlerSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -194,9 +195,6 @@ class GaodeVerifyMiddleware(object):
             self.assl_server.refresh_proxy()
             return request
 
-        if res.get('data', {}).get('base', {}).get('poiid') == verify_info['id']:
-            # for debug
-            pass
 
         if res.get('data',{}).get('base',{}).get('poiid') == verify_info['id'] \
             and res['data']['spec']['mining_shape']['shape'] != verify_info['shape']:
@@ -219,5 +217,87 @@ class GaodeVerifyMiddleware(object):
         :param spdier:
         :return:
         """
+        logger.debug('出现异常！')
+        logger.debug(exception)
+        using_proxy = request.meta['proxy'].split('://')[1]
+        if using_proxy == self.assl_server.proxy:
+            # 使用当前的ip产生的异常，需要更换ip
+            self.assl_server.refresh_proxy()
+
+        return request
+
+
+class ApiQueryLimitedMiddleware(object):
+    """
+    POI搜索配额为每天2k次，超过之后返回
+    {'info': 'DAILY_QUERY_OVER_LIMIT', 'infocode': '10003', 'status': '0'}
+    检查返回的response，如果为上面内容后，将尝试用新的key
+
+    """
+    def __init__(self):
+        self.keys = self.key_iteration()
+        self.key_using = next(self.keys)
+
+    def key_iteration(self):
+        for k in KEYS:
+            yield k
+
+    def process_request(self,request,spider):
+        """
+        根据
+        :param request:
+        :param spider:
+        :return:
+        """
+        if request.url.split('?')[0] == spider.urls_prex:
+            # 仅对官方api需要使用key的链接
+            _url, _para = request.url.split('?')
+            query_para = dict(parse.parse_qsl(_para))
+            if query_para['key'] != spider.key_using:
+                # 队列中的请求未使用最新的key，需要重新调度
+                query_para['key'] = spider.key_using
+                new_url = '%s?%s' % (_url, parse.urlencode(query_para))
+                logger.debug('更新调度队列中的key')
+                return request.replace(url=new_url)
+
+        # 非官方API不需要key，返回None继续请求
+        return None
+
+    def process_response(self,request,response,spider):
+        """
+
+        :param request:
+        :param response:
+        :param spider:
+        :return:
+        """
+        res = json.loads(response.text)
+        if res.get('info') == 'DAILY_QUERY_OVER_LIMIT':
+            # 怀疑scrapy是异步，需要判断reqeust中的key是否与spider中key一致，一致时才需要更新key，
+            # 不一致时，只需要使用spider中的key替换请求中key，并重新请求即可
+            _url, _para = request.url.split('?')
+            query_para = dict(parse.parse_qsl(_para))
+            if query_para['key'] == spider.key_using:
+                try:
+                    spider.key_using = spider.next_key()
+                    # 使用新的key，重新调度
+                    query_para['key'] = spider.key_using
+                    new_url = '%s?%s'%(_url,parse.urlencode(query_para))
+                    logger.info('检查到KEY查询上限，使用新的key重新请求：%s'%spider.key_using)
+                    return request.replace(url = new_url)
+
+                except StopIteration:
+                    logger.error('所有Key都已超限')
+                    #此处不处理，放到spider中检查，并生成CloseSpider异常
+                    return response
+            else:
+                query_para['key'] = spider.key_using
+                new_url = '%s?%s'%(_url,parse.urlencode(query_para))
+                logger.debug('请求中的key为旧的已超限的key，使用新的key重新请求:%s'%spider.key_using)
+                return request.replace(url = new_url)
+
+        return response
+
+
 
 

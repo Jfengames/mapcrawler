@@ -7,6 +7,9 @@
 
 import pymysql
 from MapCrawler.config import HOST,USER,PASSWD,PORT,DB,CHARSET
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GaodeMapSceneDbOper():
 
@@ -38,16 +41,16 @@ class GaodeMapSceneDbOper():
         create table %s (id CHAR(20) primary key,
                     province CHAR(50),
                     city CHAR(50),
-                    name char(50),
+                    name CHAR(50),
                     city_adcode CHAR(20),
                     district CHAR(50),
                     address  CHAR(100),
-                    longtitude float,
-                    lat float,
-                    type char(100),
-                    typecode char(20),
-                    classify  char(100),
-                    area float,
+                    longtitude DOUBLE,
+                    lat DOUBLE,
+                    type CHAR(100),
+                    typecode CHAR(20),
+                    classify  CHAR(100),
+                    area DOUBLE,
                     shape text
                     );"""%self.TABLE_NAME
         self.cursor.execute(sql_str)
@@ -94,6 +97,7 @@ class GaodeMapSceneDbOper():
             args.append(arg)
 
         try:
+            self.conn.ping(reconnect=True) #确保连接
             self.cursor.executemany(sql_str,args)
             self.conn.commit()
         except:
@@ -107,6 +111,7 @@ class GaodeMapSceneDbOper():
         """
         sql_str = """
         select * from {} where id =%s;""".format(self.TABLE_NAME)
+        self.conn.ping(reconnect=True) #确保连接
         self.cursor.execute(sql_str,id)
 
         if self.cursor.fetchone():
@@ -122,6 +127,7 @@ class GaodeMapSceneDbOper():
         """
         sql_str = """
         select shape from {} where id =%s;""".format(self.TABLE_NAME)
+        self.conn.ping(reconnect=True) #确保连接
         self.cursor.execute(sql_str,id)
 
         res, = self.cursor.fetchone()
@@ -178,6 +184,7 @@ class GaodeMapSceneDbOper():
                    i['shape'])
             args.append(arg)
         try:
+            self.conn.ping(reconnect=True) #确保连接
             self.cursor.executemany(sql_str,args)
             self.conn.commit()
         except Exception as e:
@@ -210,11 +217,11 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
-    # db.drop_table()
-    # print('drop table;')
-    # db.create_table()
-    # print('create talbe;')
-    print(db.is_shape_null('B017304CB1'))
+    db.drop_table()
+    print('drop table;')
+    db.create_table()
+    print('create talbe;')
+    # print(db.is_shape_null('B017304CB1'))
 
 
 
