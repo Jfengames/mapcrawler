@@ -22,8 +22,8 @@ from MapCrawler.config import ADSL_SERVER_AUTH,ADSL_SERVER_URL
 from MapCrawler.database_operations import GaodeMapSceneDbOper
 
 def gcj2wgs(long,lat):
-    assert type(long)==float,'经度数据类型需要为浮点型 '
-    assert type(lat)==float,'维度数据类型需要为浮点型 '
+    assert type(long) in [float, np.float64], '经度数据类型需要为浮点型 '
+    assert type(lat) in [float, np.float64], '维度数据类型需要为浮点型 '
     a = 6378245.0  # 克拉索夫斯基椭球参数长半轴a
     ee = 0.00669342162296594323  # 克拉索夫斯基椭球参数第一偏心率平方
     PI = 3.14159265358979324  # 圆周率
@@ -56,7 +56,7 @@ def wgc2gcj(long,lat):
     assert type(lat)==float,'维度数据类型需要为浮点型 '
     pass
 
-    return _long,_lat
+    return round(_long,6),round(_lat,6)
 
 
 def generate_grids(start_long,start_lat,end_long,end_lat,resolution):
@@ -224,30 +224,33 @@ class AddWgsToDB(GaodeMapSceneDbOper):
 
         query_str = """
                 select * from {} 
-                """%self.TABLE_NAME
+                """.format(self.TABLE_NAME)
 
         update_str="""
             update {} set wgc_long=%s,wgc_lat=%s,wgc_shape=%s
-            where id = %s""".format(self.TABLE_NAME)
+            where id = %s and wgc_long is NULL;""".format(self.TABLE_NAME)
 
         with self.conn.cursor(DictCursor) as query_cursor:
             query_cursor.execute(query_str)
             count = 0
             for one in query_cursor:
-                wgc_long,wgc_lat = wgc2gcj(float(one['longtitude']),
+                wgc_long,wgc_lat = gcj2wgs(float(one['longtitude']),
                                            float(one['lat']))
-                vertexes = np.array([float(i) for i in one['shape'].replace('|',',').replace(';',',').split(',')]).reshape(-1,2)
-                wgc_shape = ''
-                for lo,la in vertexes:
-                    _lo,_la = wgc2gcj(lo,la)
-                    wgc_shape+=','.join([_lo,_la])
+                if one['shape'] == 'NULL':
+                    wgc_shape = 'NULL'
+                else:
+                    vertexes = np.array([float(i) for i in one['shape'].replace('|',',').replace(';',',').split(',')]).reshape(-1,2)
+                    wgc_shape = ''
+                    for lo,la in vertexes:
+                        _lo,_la = gcj2wgs(lo,la)
+                        wgc_shape+=','.join([str(_lo),str(_la)])
 
                 self.cursor.execute(update_str,(wgc_long,wgc_lat,wgc_shape,one['id']))
                 count+=1
                 if count < NUM_TO_COMMIT:
                     continue
                 else:
-                    logger.info('提交数据库增加%s条数据的wgc信息'%count)
+                    print('提交数据库增加%s条数据的wgc信息'%count)
                     self.conn.commit()
                     count=0
 
@@ -268,10 +271,13 @@ if __name__ == '__main__':
     #
     # a = is_contained(shape,points)
     # print(CITY_POLYLINE)
-    # print([i for i in a])
-    a = generate_city_grids(CITY_POLYLINE,0.01)
-    count = 0
-    for i in a:
-       print(count)
-       count+=1
-       print(i)
+    # # print([i for i in a])
+    # a = generate_city_grids(CITY_POLYLINE,0.01)
+    # count = 0
+    # for i in a:
+    #    print(count)
+    #    count+=1
+    #    print(i)
+
+    ad = AddWgsToDB()
+    ad.save_wgs_to_db()
