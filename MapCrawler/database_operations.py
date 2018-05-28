@@ -25,12 +25,12 @@ class GaodeMapSceneDbOper():
                                     charset=CHARSET)
         self.cursor = self.conn.cursor()
 
-    def drop_table(self):
-        """
-
-        :return:
-        """
-        self.cursor.execute("drop table if exists %s"%self.TABLE_NAME)
+    # def drop_table(self):
+    #     """
+    #
+    #     :return:
+    #     """
+    #     self.cursor.execute("drop table if exists %s"%self.TABLE_NAME)
 
 
     def create_table(self):
@@ -52,7 +52,10 @@ class GaodeMapSceneDbOper():
                     typecode CHAR(20),
                     classify  CHAR(100),
                     area DOUBLE,
-                    shape text
+                    shape TEXT,
+                    wgs_long DOUBLE,
+                    wgs_lat DOUBLE,
+                    wgs_shape TEXT
                     );"""%self.TABLE_NAME
         self.cursor.execute(sql_str)
 
@@ -88,7 +91,7 @@ class GaodeMapSceneDbOper():
                    i['city_adcode'],\
                    i['district'],\
                    i['address'],\
-                   i['center_long'],\
+                   i['center_long'],
                    i['center_lat'],\
                    i['type'],\
                    i['typecode'],\
@@ -229,11 +232,11 @@ class GaodeMapSceneDbOper():
 
 if __name__=='__main__':
     db = GaodeMapSceneDbOper()
-    db.drop_table()
-    print('drop table;')
-    db.create_table()
-    print('create talbe;')
-    # print(db.is_shape_null('B017304CB1'))
+    # db.drop_table()
+    # print('drop table;')
+    # db.create_table()
+    # print('create talbe;')
+    print(db.is_shape_null('B017304CB1'))
 
 
 

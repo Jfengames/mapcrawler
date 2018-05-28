@@ -48,14 +48,13 @@ DEFAULT_REQUEST_HEADERS = {
 # Enable or disable spider middlewares
 # See https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 SPIDER_MIDDLEWARES = {
-   # 'MapCrawler.middlewares.MapcrawlerSpiderMiddleware': 543,
+    # 'MapCrawler.middlewares.MapcrawlerSpiderMiddleware': 543,
     'MapCrawler.middlewares.GaodeVerifySpiderMiddleware':300,
 }
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-#    'MapCrawler.middlewares.AdslProxyMiddleware': 543,
     'MapCrawler.middlewares.GaodeVerifyMiddleware': 300,
     'MapCrawler.middlewares.ApiQueryLimitedMiddleware': 400
 }
@@ -94,7 +93,7 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 # LOG_FILE = 'mapcrawler.log'
 LOG_ENCODING='utf-8'
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = 'DEBUG'
 
 
 

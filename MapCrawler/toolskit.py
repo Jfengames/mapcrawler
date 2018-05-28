@@ -11,6 +11,9 @@ import requests
 import time
 import math
 from matplotlib.path import Path
+from pymysql.cursors import DictCursor
+import logging
+logger = logging.getLogger(__name__)
 
 #import sys
 #sys.path.append('C:\\Users\\X1Carbon\\MapCrawler')
@@ -190,8 +193,7 @@ def is_contained(shape,points):
     pth = Path(shape, closed=False) #边界上的判断有误
     return pth.contains_points(points,radius=-0.00001)
 
-# 西安
-CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline('350200')
+
 def generate_city_grids(city_polyline, resolution):
     """
     输入城市边界，根据栅格长度返回在城市边界内的栅格
@@ -212,8 +214,50 @@ def generate_city_grids(city_polyline, resolution):
 
 
 
+class AddWgsToDB(GaodeMapSceneDbOper):
+    """
+    往数据库里添加wgs坐标。
+    前提：需要数据里增加三列，wgc_long,wgc_lat,wgc_shape
+    """
+    def save_wgs_to_db(self):
+        NUM_TO_COMMIT = 100
+
+        query_str = """
+                select * from {} 
+                """%self.TABLE_NAME
+
+        update_str="""
+            update {} set wgc_long=%s,wgc_lat=%s,wgc_shape=%s
+            where id = %s""".format(self.TABLE_NAME)
+
+        with self.conn.cursor(DictCursor) as query_cursor:
+            query_cursor.execute(query_str)
+            count = 0
+            for one in query_cursor:
+                wgc_long,wgc_lat = wgc2gcj(float(one['longtitude']),
+                                           float(one['lat']))
+                vertexes = np.array([float(i) for i in one['shape'].replace('|',',').replace(';',',').split(',')]).reshape(-1,2)
+                wgc_shape = ''
+                for lo,la in vertexes:
+                    _lo,_la = wgc2gcj(lo,la)
+                    wgc_shape+=','.join([_lo,_la])
+
+                self.cursor.execute(update_str,(wgc_long,wgc_lat,wgc_shape,one['id']))
+                count+=1
+                if count < NUM_TO_COMMIT:
+                    continue
+                else:
+                    logger.info('提交数据库增加%s条数据的wgc信息'%count)
+                    self.conn.commit()
+                    count=0
+
+            self.conn.commit()
 
 
+
+
+# 西安
+CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline('110000')
 
 if __name__ == '__main__':
     # scrope = [113.652670, 34.808881, 113.692670, 34.758881]
@@ -223,11 +267,11 @@ if __name__ == '__main__':
     # points = np.array([[2,2],[3,3.1]])
     #
     # a = is_contained(shape,points)
-    print(CITY_POLYLINE)
+    # print(CITY_POLYLINE)
     # print([i for i in a])
-    #a = generate_city_grids(CITY_POLYLINE,0.01)
-    #count = 0
-    #for i in a:
-       # print(count)
-       # count+=1
-       # print(i)
+    a = generate_city_grids(CITY_POLYLINE,0.01)
+    count = 0
+    for i in a:
+       print(count)
+       count+=1
+       print(i)
