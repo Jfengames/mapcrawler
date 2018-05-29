@@ -160,7 +160,7 @@ class GaodeCrawler(scrapy.Spider):
             item['city_adcode'] = base['city_adcode']
             item['address'] = base['address']
             # item['district'] = base.get('bcs','NULL')
-            item['district'] = response.request.meta['adname']
+            item['district'] = response.request.meta.get('adname') or None
             item['center_long'] = float(base['x'])
             item['center_lat'] = float(base['y'])
             item['type'] = base['new_keytype']
@@ -172,7 +172,7 @@ class GaodeCrawler(scrapy.Spider):
             self.items_crawled+=1
 
         except:
-            logger.debug('获取详情有误')
+            logger.error('获取详情有误')
 
 
     def next_key(self):
