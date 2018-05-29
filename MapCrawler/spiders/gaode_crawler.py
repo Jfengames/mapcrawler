@@ -13,7 +13,7 @@ from MapCrawler.database_operations import GaodeMapSceneDbOper
 import logging
 logger = logging.getLogger(__name__)
 
-from MapCrawler.toolskit import generate_city_grids,CITY_POLYLINE
+from MapCrawler.toolskit import generate_city_grids,CITY_POLYLINE,CITY_ADCODE
 from MapCrawler.config import KEYS
 
 
@@ -100,7 +100,7 @@ class GaodeCrawler(scrapy.Spider):
         }
 
         for poi in res.get('pois'):
-            if self.db.is_item_exist_by_id(poi['id'])\
+            if self.db.is_item_exist_by_id_city_adcode(poi['id'],CITY_ADCODE)\
                     and not self.db.is_shape_null(poi['id']):
                 continue
 

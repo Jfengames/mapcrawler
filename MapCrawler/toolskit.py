@@ -260,7 +260,8 @@ class AddWgsToDB(GaodeMapSceneDbOper):
 
 
 # 西安
-CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline('110000')
+CITY_ADCODE = '310100'
+CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(CITY_ADCODE)
 
 if __name__ == '__main__':
     # scrope = [113.652670, 34.808881, 113.692670, 34.758881]

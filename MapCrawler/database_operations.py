@@ -39,7 +39,7 @@ class GaodeMapSceneDbOper():
         :return:
         """
         sql_str = """
-        create table %s (id CHAR(20) primary key,
+        create table %s (id CHAR(20) ,
                     province CHAR(50),
                     city CHAR(50),
                     name CHAR(50),
@@ -55,7 +55,8 @@ class GaodeMapSceneDbOper():
                     shape TEXT,
                     wgs_long DOUBLE,
                     wgs_lat DOUBLE,
-                    wgs_shape TEXT
+                    wgs_shape TEXT,
+                    PRIMARY KEY (id,city_adcode)
                     );"""%self.TABLE_NAME
         self.cursor.execute(sql_str)
 
@@ -107,21 +108,22 @@ class GaodeMapSceneDbOper():
         except:
             self.conn.rollback()
 
-    def is_item_exist_by_id(self,id):
+    def is_item_exist_by_id_city_adcode(self,id,city_adcode):
         """
 
         :param item:
         :return:
         """
         sql_str = """
-        select * from {} where id =%s;""".format(self.TABLE_NAME)
+        select * from {} where id =%s and city_adcode=%s;""".format(self.TABLE_NAME)
         self.conn.ping(reconnect=True) #确保连接
-        self.cursor.execute(sql_str,id)
+        self.cursor.execute(sql_str,(id,city_adcode))
 
         if self.cursor.fetchone():
             return True
         else:
             return False
+
     def select_city_polyline(self, adcode):
         """
 
