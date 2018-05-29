@@ -6,10 +6,12 @@
 """
 
 import pymysql
+import numpy as np
 from MapCrawler.config import HOST,USER,PASSWD,PORT,DB,CHARSET
+from MapCrawler.toolskit import gcj2wgs
 import logging
-
 logger = logging.getLogger(__name__)
+
 
 class GaodeMapSceneDbOper():
 
@@ -82,9 +84,15 @@ class GaodeMapSceneDbOper():
                     typecode,
                     classify ,
                     area,
-                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""".format(self.TABLE_NAME)
+                    shape,
+                    wgs_long,
+                    wgs_lat,
+                    wgs_shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""".format(self.TABLE_NAME)
         args = []
         for i in items:
+            wgs_long,wgs_lat,wgs_shape = self.get_wgs_from_item(i['center_long'],
+                                                                i['center_lat'],
+                                                                i['shape'])
             arg = (i['id'],\
                    i['province'],\
                    i['city'],\
@@ -98,7 +106,10 @@ class GaodeMapSceneDbOper():
                    i['typecode'],\
                    i['classify'],\
                    i['area'],\
-                   i['shape'])
+                   i['shape'],\
+                   wgs_long,
+                   wgs_lat,
+                   wgs_shape)
             args.append(arg)
 
         try:
@@ -182,9 +193,15 @@ class GaodeMapSceneDbOper():
                     typecode,
                     classify ,
                     area,
-                    shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""".format(self.TABLE_NAME)
+                    shape,
+                    wgs_long,
+                    wgs_lat,
+                    wgs_shape) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);""".format(self.TABLE_NAME)
         args = []
         for i in items:
+            wgs_long,wgs_lat,wgs_shape = self.get_wgs_from_item(i['center_long'],
+                                                                i['center_lat'],
+                                                                i['shape'])
             arg = (i['id'], \
                    i['province'], \
                    i['city'], \
@@ -198,7 +215,10 @@ class GaodeMapSceneDbOper():
                    i['typecode'], \
                    i['classify'], \
                    i['area'], \
-                   i['shape'])
+                   i['shape'],\
+                   wgs_long,
+                   wgs_lat,
+                   wgs_shape)
             args.append(arg)
         try:
             self.conn.ping(reconnect=True) #确保连接
@@ -208,10 +228,57 @@ class GaodeMapSceneDbOper():
             logger.warning('数据更新到数据库中有误：%s'%e)
             self.conn.rollback()
 
+
+
+    def get_wgs_from_item(self,long,lat,shape):
+        wgs_long, wgs_lat = gcj2wgs(float(long),
+                                    float(lat))
+        wgs_shape = []
+        if shape == 'NULL':
+            wgs_shape = None
+        else:
+            vertexes = np.array(
+                [float(i) for i in shape.replace('|', ',').replace(';', ',').split(',')]).reshape(-1, 2)
+            for lo, la in vertexes:
+                _lo, _la = gcj2wgs(lo, la)
+                wgs_shape.append(','.join([str(_lo), str(_la)]))
+
+            wgs_shape = ';'.join(wgs_shape)
+        return wgs_long,wgs_lat,wgs_shape
+
+
+    def  add_wgs_to_item(self):
+        NUM_TO_COMMIT = 100
+
+        query_str = """
+                select * from {}
+                """.format(self.TABLE_NAME)
+
+        update_str="""
+            update {} set wgs_long=%s,wgs_lat=%s,wgs_shape=%s
+            where id = %s and wgs_long is NULL;""".format(self.TABLE_NAME)
+
+        with self.conn.cursor(pymysql.cursors.DictCursor) as query_cursor:
+            query_cursor.execute(query_str)
+            count = 0
+            for one in query_cursor:
+                wgs_long,wgs_lat,wgs_shape = self.get_wgs_from_item(one['longtitude'],
+                                                                    one['lat'],
+                                                                    one['shape'])
+
+                self.cursor.execute(update_str,(wgs_long,wgs_lat,wgs_shape,one['id']))
+                count+=1
+                if count < NUM_TO_COMMIT:
+                    continue
+                else:
+                    print('提交数据库增加%s条数据的wgc信息'%count)
+                    self.conn.commit()
+                    count=0
+
+            self.conn.commit()
+
     def __del__(self):
         self.conn.close()
-
-
 # class GaodeDistrictOper():
 #     TABLE_NAME = 'districts'
 #     def __init__(self):
@@ -238,7 +305,8 @@ if __name__=='__main__':
     # print('drop table;')
     # db.create_table()
     # print('create talbe;')
-    print(db.is_shape_null('B017304CB1'))
+    # print(db.is_shape_null('B017304CB1'))
+    db.add_wgs_to_item()
 
 
 

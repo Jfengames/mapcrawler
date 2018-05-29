@@ -64,7 +64,9 @@ class MapcrawlerPipeline(object):
 
         # 记录下来爬到哪个网格上。
         with open(spider.start_crawl_grid_file, 'w') as fh:
-            json.dump({'start_grid': spider.grid_num}, fh)
+            json.dump({'start_grid': spider.grid_num,
+                       'CITY_ADCODE':spider.city_adcode,
+                       'resolution':spider.resolution}, fh)
 
 
         if self.items_to_add:

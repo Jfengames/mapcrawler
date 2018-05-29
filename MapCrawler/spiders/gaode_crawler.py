@@ -13,7 +13,7 @@ from MapCrawler.database_operations import GaodeMapSceneDbOper
 import logging
 logger = logging.getLogger(__name__)
 
-from MapCrawler.toolskit import generate_city_grids,CITY_POLYLINE,CITY_ADCODE
+from MapCrawler.toolskit import generate_city_grids
 from MapCrawler.config import KEYS
 
 
@@ -40,13 +40,21 @@ class GaodeCrawler(scrapy.Spider):
         self.db= GaodeMapSceneDbOper()
         self.keys = self._next_key()
         self.key_using = self.next_key()
-        if os.path.exists(self.start_crawl_grid_file):
-            with open(self.start_crawl_grid_file,'r') as fh:
-                self.start_grid = json.load(fh)['start_grid']
-        else:
+        try:
+            fh = open(self.start_crawl_grid_file, 'r')
+            _start = json.load(fh)
+            self.start_grid = _start['start_grid']
+            self.city_adcode = _start['CITY_ADCODE']
+            self.resolution = _start['resolution']
+        except Exception as e:
+            logger.error('爬虫城市和起始网格未配置：%s'%e)
+            self.city_adcode = 'XXXXXX'
             self.start_grid = 0
+            self.resolution = 0.01
+            raise CloseSpider('爬虫城市和起始网格未配置')
 
 
+        CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(self.city_adcode)
         parameters = {
             # 'polygon':'113.652670,34.808881,113.642670,34.798881',
             'types':'120000',# 居民区
@@ -58,7 +66,7 @@ class GaodeCrawler(scrapy.Spider):
             # 'citylimit':'true'
         }
 
-        city_grids = generate_city_grids(CITY_POLYLINE, 0.01)
+        city_grids = generate_city_grids(CITY_POLYLINE, self.resolution)
 
 
         for grid in city_grids:
@@ -100,7 +108,7 @@ class GaodeCrawler(scrapy.Spider):
         }
 
         for poi in res.get('pois'):
-            if self.db.is_item_exist_by_id_city_adcode(poi['id'],CITY_ADCODE)\
+            if self.db.is_item_exist_by_id_city_adcode(poi['id'],self.city_adcode)\
                     and not self.db.is_shape_null(poi['id']):
                 continue
 

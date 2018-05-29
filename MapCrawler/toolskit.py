@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 #sys.path.append('C:\\Users\\X1Carbon\\MapCrawler')
 from MapCrawler.config import ADSL_SERVER_AUTH,ADSL_SERVER_URL
 
-from MapCrawler.database_operations import GaodeMapSceneDbOper
+# from MapCrawler.database_operations import GaodeMapSceneDbOper
 
 def gcj2wgs(long,lat):
     assert type(long) in [float, np.float64], '经度数据类型需要为浮点型 '
@@ -214,54 +214,55 @@ def generate_city_grids(city_polyline, resolution):
 
 
 
-class AddWgsToDB(GaodeMapSceneDbOper):
-    """
-    往数据库里添加wgs坐标。
-    前提：需要数据里增加三列，wgc_long,wgc_lat,wgc_shape
-    """
-    def save_wgs_to_db(self):
-        NUM_TO_COMMIT = 100
-
-        query_str = """
-                select * from {} 
-                """.format(self.TABLE_NAME)
-
-        update_str="""
-            update {} set wgc_long=%s,wgc_lat=%s,wgc_shape=%s
-            where id = %s and wgc_long is NULL;""".format(self.TABLE_NAME)
-
-        with self.conn.cursor(DictCursor) as query_cursor:
-            query_cursor.execute(query_str)
-            count = 0
-            for one in query_cursor:
-                wgc_long,wgc_lat = gcj2wgs(float(one['longtitude']),
-                                           float(one['lat']))
-                if one['shape'] == 'NULL':
-                    wgc_shape = 'NULL'
-                else:
-                    vertexes = np.array([float(i) for i in one['shape'].replace('|',',').replace(';',',').split(',')]).reshape(-1,2)
-                    wgc_shape = ''
-                    for lo,la in vertexes:
-                        _lo,_la = gcj2wgs(lo,la)
-                        wgc_shape+=','.join([str(_lo),str(_la)])
-
-                self.cursor.execute(update_str,(wgc_long,wgc_lat,wgc_shape,one['id']))
-                count+=1
-                if count < NUM_TO_COMMIT:
-                    continue
-                else:
-                    print('提交数据库增加%s条数据的wgc信息'%count)
-                    self.conn.commit()
-                    count=0
-
-            self.conn.commit()
+# class AddWgsToDB(GaodeMapSceneDbOper):
+#     """
+#     往数据库里添加wgs坐标。
+#     前提：需要数据里增加三列，wgc_long,wgc_lat,wgc_shape
+#     """
+#     def save_wgs_to_db(self):
+#         NUM_TO_COMMIT = 100
+#
+#         query_str = """
+#                 select * from {}
+#                 """.format(self.TABLE_NAME)
+#
+#         update_str="""
+#             update {} set wgc_long=%s,wgc_lat=%s,wgc_shape=%s
+#             where id = %s and wgc_long is NULL;""".format(self.TABLE_NAME)
+#
+#         with self.conn.cursor(DictCursor) as query_cursor:
+#             query_cursor.execute(query_str)
+#             count = 0
+#             for one in query_cursor:
+#                 wgc_long,wgc_lat = gcj2wgs(float(one['longtitude']),
+#                                            float(one['lat']))
+#                 wgs_shape = []
+#                 if one['shape'] == 'NULL':
+#                     wgs_shape = 'NULL'
+#                 else:
+#                     vertexes = np.array([float(i) for i in one['shape'].replace('|',',').replace(';',',').split(',')]).reshape(-1,2)
+#                     for lo,la in vertexes:
+#                         _lo,_la = gcj2wgs(lo,la)
+#                         wgs_shape.append(','.join([str(_lo),str(_la)]))
+#
+#                 wgs_shape = ','.join(wgs_shape)
+#
+#                 self.cursor.execute(update_str,(wgc_long,wgc_lat,wgs_shape,one['id']))
+#                 count+=1
+#                 if count < NUM_TO_COMMIT:
+#                     continue
+#                 else:
+#                     print('提交数据库增加%s条数据的wgc信息'%count)
+#                     self.conn.commit()
+#                     count=0
+#
+#             self.conn.commit()
 
 
 
 
 # 西安
-CITY_ADCODE = '310100'
-CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(CITY_ADCODE)
+# CITY_ADCODE = '310100'
 
 if __name__ == '__main__':
     # scrope = [113.652670, 34.808881, 113.692670, 34.758881]
@@ -280,5 +281,6 @@ if __name__ == '__main__':
     #    count+=1
     #    print(i)
 
-    ad = AddWgsToDB()
-    ad.save_wgs_to_db()
+    # ad = AddWgsToDB()
+    # ad.save_wgs_to_db()
+    pass;
