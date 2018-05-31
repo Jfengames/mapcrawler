@@ -201,7 +201,7 @@ def generate_city_grids(city_polyline, resolution):
     :param resolution:
     :return:
     """
-    city_vertexes =np.array([float(i) for i in city_polyline.replace('|',';').replace(';',',').split(',')]).reshape(-1,2)
+    city_vertexes =np.array([float(i) for i in city_polyline.replace(';',',').split(',')]).reshape(-1,2)
     max_long = max(city_vertexes[:,0])
     min_long = min(city_vertexes[:,0])
     max_lat = max(city_vertexes[:,1])

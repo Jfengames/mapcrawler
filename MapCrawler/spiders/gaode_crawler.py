@@ -54,7 +54,10 @@ class GaodeCrawler(scrapy.Spider):
             raise CloseSpider('爬虫城市和起始网格未配置')
 
 
-        CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(self.city_adcode)
+        _CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(self.city_adcode)
+        # 部分城市以‘|’分割不同区域，一般最后一个是城市边界
+        CITY_POLYLINE = _CITY_POLYLINE.split('|')[-1]
+
 
         parameters = {
             # 'polygon':'113.652670,34.808881,113.642670,34.798881',
