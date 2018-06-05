@@ -66,7 +66,8 @@ class MapcrawlerPipeline(object):
         with open(spider.start_crawl_grid_file, 'w') as fh:
             json.dump({'start_grid': spider.grid_num,
                        'CITY_ADCODE':spider.city_adcode,
-                       'resolution':spider.resolution}, fh)
+                       'resolution':spider.resolution,
+                       'TYPES':spider.types}, fh)
 
 
         if self.items_to_add:

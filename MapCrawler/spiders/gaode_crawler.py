@@ -46,25 +46,23 @@ class GaodeCrawler(scrapy.Spider):
             self.start_grid = _start['start_grid']
             self.city_adcode = _start['CITY_ADCODE']
             self.resolution = _start['resolution']
+            self.types = _start['TYPES']
         except Exception as e:
             logger.error('爬虫城市和起始网格未配置：%s'%e)
             self.city_adcode = 'XXXXXX'
             self.start_grid = 0
             self.resolution = 0.01
+            self.types = 'XXXXXX'
             raise CloseSpider('爬虫城市和起始网格未配置')
 
 
         CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(self.city_adcode)
 
         parameters = {
-            # 'polygon':'113.652670,34.808881,113.642670,34.798881',
-            'types':'120000',# 居民区
+            'types':self.types,
             'offset':20,#每页最大数据
             'key':self.key_using
 
-            # 'children':1,
-            # 'city':'郑州',
-            # 'citylimit':'true'
         }
 
         city_grids = generate_city_grids(CITY_POLYLINE, self.resolution)
@@ -108,7 +106,7 @@ class GaodeCrawler(scrapy.Spider):
             'citylimit':'true',
         }
 
-        for poi in res.get('pois'):
+        for poi in res.get('pois',[]):
             if self.db.is_item_exist_by_id_city_adcode(poi['id'],self.city_adcode)\
                     and not self.db.is_shape_null(poi['id']):
                 continue
@@ -128,14 +126,14 @@ class GaodeCrawler(scrapy.Spider):
 
 
         #检查是否有下一页
-        # if query_para.get('page'):
-        #     current_page = int(query_para['page'])
-        # else:
-        #     current_page = 1
         current_page = query_para.get('page') or 1
         current_poi_num = (int(current_page)-1)*int(query_para['offset']) + \
             len(res['pois'])
         logger.debug('当前页面为%s，当前poi数量为%s，返回的count数为%s'%(current_page,current_poi_num,res['count']))
+        if int(res['count'])>=1000:
+            #超过最大返回数量
+            logger.error('该栅格POI超出最大返回数量（返回数量：%s）：%s'%(int(res['count']),query_para['polygon']))
+
         if current_poi_num < int(res['count']):
             query_para['page'] = int(current_page)+1
             url = '%s?%s'%(_url,parse.urlencode(query_para))
