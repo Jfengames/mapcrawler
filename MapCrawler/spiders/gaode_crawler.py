@@ -57,9 +57,6 @@ class GaodeCrawler(scrapy.Spider):
 
 
         _CITY_POLYLINE= GaodeMapSceneDbOper().select_city_polyline(self.city_adcode)
-        # 部分城市以‘|’分割不同区域，一般最后一个是城市边界
-        CITY_POLYLINE = _CITY_POLYLINE.split('|')[-1]
-
 
         parameters = {
             'types':self.types,
@@ -68,21 +65,23 @@ class GaodeCrawler(scrapy.Spider):
 
         }
 
-        city_grids = generate_city_grids(CITY_POLYLINE, self.resolution)
+        # 部分城市以‘|’分割不同区域，一般最后一个是城市边界
+        for CITY_POLYLINE in _CITY_POLYLINE.split('|'):
 
+            city_grids = generate_city_grids(CITY_POLYLINE, self.resolution)
 
-        for grid in city_grids:
-            if self.grid_num < self.start_grid:
-                # 小于栅格起始数，跳过
-                self.grid_num += 1
-                continue
+            for grid in city_grids:
+                if self.grid_num < self.start_grid:
+                    # 小于栅格起始数，跳过
+                    self.grid_num += 1
+                    continue
 
-            logger.info('请求第%s个网格'%self.grid_num)
-            self.grid_num+=1
-            parameters['polygon']= ','.join([str(i) for i in grid])
-            url = '%s?%s'%(self.urls_prex,parse.urlencode(parameters))
-            # logger.info('产生区域搜索请求：%s'%url)
-            yield scrapy.Request(url,callback=self.parse_region_pois)
+                logger.info('请求第%s个网格'%self.grid_num)
+                self.grid_num+=1
+                parameters['polygon']= ','.join([str(i) for i in grid])
+                url = '%s?%s'%(self.urls_prex,parse.urlencode(parameters))
+                # logger.info('产生区域搜索请求：%s'%url)
+                yield scrapy.Request(url,callback=self.parse_region_pois)
 
 
     def parse_region_pois(self,response):
