@@ -171,8 +171,8 @@ class GaodeCrawler(scrapy.Spider):
             yield item
             self.items_crawled+=1
 
-        except:
-            logger.error('获取详情有误')
+        except Exception as e:
+            logger.error('获取详情有误\n%s'%e)
 
 
     def next_key(self):
