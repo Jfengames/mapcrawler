@@ -200,7 +200,8 @@ class GaodeCrawler(scrapy.Spider):
             m = Mail(MAIL_CONFIG)
             title = '城市%s爬取结束，结束原因:%s' % (self.city_adcode, reason)
             m.compose(title=title, main_msg='')
-            m.send(m.to)
+            for to in m.to:
+                m.send(to)
 
 
 
