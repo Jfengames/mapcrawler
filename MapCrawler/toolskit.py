@@ -12,6 +12,16 @@ import time
 import math
 from matplotlib.path import Path
 from pymysql.cursors import DictCursor
+import json
+import sys
+from email import encoders
+from email.header import Header
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+# from email.utils import parseaddr, formataddr
+import smtplib
+from socket import timeout
 import logging
 logger = logging.getLogger(__name__)
 
@@ -261,6 +271,85 @@ def generate_city_grids(city_polyline, resolution):
 
 
 
+class Mail():
+    def __init__(self,config_dict=None):
+        if config_dict is not None:
+            self.config(config_dict)
+            self.login()
+
+
+    def config(self,config_dict):
+        """
+        读取配置文件信息，配置邮箱的发送地址，服务器，密码等
+        :param config_file:
+        :return:
+        """
+
+        self.fromaddr = config_dict['fromaddr']
+        self.to = config_dict['to']
+        self.passwd = config_dict['passwd']
+        self.server = config_dict['server']
+
+    def compose(self,title,main_msg,paylaod_dict={}):
+        """
+        封装邮件，填写标题，内容，附加附件
+        :param title:
+        :param main_msg:
+        :param paylaod_dict: {name:file_path}
+        :return:
+        """
+        self.msg = MIMEMultipart()
+        self.msg['From'] = self.fromaddr
+        # self.msg['To'] = self.to
+        self.msg['Subject'] = Header(title, 'utf-8').encode()
+
+        payloadindex = 0
+        payloadtxt = ''
+        for file_name,file in paylaod_dict.items():
+            with open(file, 'rb') as f:
+                # 设置附件的MIME和文件名，这里是png类型:
+                mime = MIMEBase('image', 'png', filename=file_name)
+                # 加上必要的头信息:
+                mime.add_header('Content-Disposition', 'attachment', filename=file_name)
+                mime.add_header('Content-ID', '<%s>' % (payloadindex))
+                mime.add_header('X-Attachment-Id', '%s' % (payloadindex))
+                # 把附件的内容读进来:
+                mime.set_payload(f.read())
+                # 用Base64编码:
+                encoders.encode_base64(mime)
+                # 添加到MIMEMultipart:
+                self.msg.attach(mime)
+
+                # 设置正文中对附件的应用
+                payloadtxt += '<p><img src="cid:%s"></p>' % (payloadindex)
+            # 附件引用自增1
+            payloadindex += 1
+        mailtxt = '<html><body><h1>%s</h1>' % (main_msg) + payloadtxt + '</body></html>'
+
+        self.msg.attach(MIMEText(mailtxt, 'html', 'utf-8'))
+
+    def login(self,timeout=30*60):
+        self.mail_service = smtplib.SMTP(self.server, 25)
+        # server.set_debuglevel(1)
+        self.mail_service.login(self.fromaddr, self.passwd)
+
+    def _send(self,send_to):
+        self.msg['To'] = send_to #在邮件中显示接收人
+        self.mail_service.sendmail(self.fromaddr, send_to, self.msg.as_string())
+
+    def send(self,send_to=None):
+        if send_to is None:
+            send_to = self.to
+
+        try:
+            self._send(send_to)
+        except:
+            self.login()
+            self._send(send_to)
+
+    # def __del__(self):
+    #     self.mail_service.quit()
+
 # 西安
 # CITY_ADCODE = '310100'
 
@@ -283,4 +372,11 @@ if __name__ == '__main__':
 
     # ad = AddWgsToDB()
     # ad.save_wgs_to_db()
+    from MapCrawler.config import MAIL_NOTIFY
+    if MAIL_NOTIFY:
+        from MapCrawler.config import MAIL_CONFIG
+        m = Mail(MAIL_CONFIG)
+        m.compose(title='test',main_msg='test2')
+        m.send(m.to)
+
     pass;

@@ -13,9 +13,8 @@ from MapCrawler.database_operations import GaodeMapSceneDbOper
 import logging
 logger = logging.getLogger(__name__)
 
-from MapCrawler.toolskit import generate_city_grids
+from MapCrawler.toolskit import generate_city_grids,Mail
 from MapCrawler.config import KEYS
-
 
 class GaodeCrawler(scrapy.Spider):
     name = 'GaoDe'
@@ -191,3 +190,18 @@ class GaodeCrawler(scrapy.Spider):
         """
         for k in KEYS:
             yield k
+
+
+    def closed(self,reason):
+
+        from MapCrawler.config import MAIL_NOTIFY
+        if MAIL_NOTIFY:
+            from MapCrawler.config import MAIL_CONFIG
+            m = Mail(MAIL_CONFIG)
+            title = '城市%s爬取结束，结束原因:%s' % (self.city_adcode, reason)
+            m.compose(title=title, main_msg='')
+            m.send(m.to)
+
+
+
+
